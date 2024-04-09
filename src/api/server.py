@@ -8,17 +8,16 @@ import sys
 from starlette.middleware.cors import CORSMiddleware
 
 description = """
-Central Coast Cauldrons is the premier ecommerce site for all your alchemical desires.
-"""
+Discover the art of our Mustang Mixers with Learn By Brewing - Where Every Sip Starts an Adventure!"""
 
 app = FastAPI(
-    title="Central Coast Cauldrons",
+    title="Learn By Brewing",
     description=description,
     version="0.0.1",
     terms_of_service="http://example.com/terms/",
     contact={
-        "name": "Lucas Pierce",
-        "email": "lupierce@calpoly.edu",
+        "name": "Justin Yuen",
+        "email": "jdyuen@calpoly.edu",
     },
 )
 
