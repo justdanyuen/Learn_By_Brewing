@@ -69,9 +69,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
                 data = result.fetchone()
                 id = data[0]
-                num_green_ml = data[3]
-                num_green_potions = data[2]
-                gold = data[4]
+                num_green_ml = data[2]
+                num_green_potions = data[1]
+                gold = data[3]
                 num_purchase = 0
                 while gold >= price and quantity > 0:
                     gold -= price

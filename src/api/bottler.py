@@ -29,8 +29,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         data = result.fetchone()
         id = data[0]
-        num_potions = data[2]
-        num_green_ml = data[3]
+        num_potions = data[1]
+        num_green_ml = data[2]
         ml = order_quantity * 100
 
         new_num_green_ml = num_green_ml - ml
@@ -66,12 +66,22 @@ def get_bottle_plan():
     # Initial logic: bottle all barrels into red potions.
 
     
-    return [
-            {
-                "potion_type": [100, 0, 0, 0],
-                "quantity": 5,
-            }
-        ]
+    bottle_plan = []
+
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
+        data = result.fetchone()
+        ml = data[2]
+        quantity = ml // 100 #each potion requires 100ml
+
+    if quantity > 0:
+        bottle_plan.append({
+                "potion_type": [0, 100, 0, 0], #hard coded to create just green potions for now...
+                "quantity": quantity,
+        })
+    print(bottle_plan) # for debugging
+        
+    return bottle_plan
 
 if __name__ == "__main__":
     print(get_bottle_plan())
