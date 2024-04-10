@@ -60,7 +60,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         data = result.fetchone()
-        print("Current database status: " + str(data[1]) + " " + str(data[2]) + " " + str(data[3]))
+        print("global_inventory current values: " + str(data[1]) + " " + str(data[2]) + " " + str(data[3]))
         num_green_potions = data[1]
         gold = data[3]
         for i in wholesale_catalog:

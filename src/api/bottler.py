@@ -20,10 +20,10 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     """ """
     print(f"potions delivered: {potions_delivered} order_id: {order_id}")
 
-    order_quantity = 0
+    order_num = 0
     for i in potions_delivered:
         if i.potion_type == [0, 100, 0, 0]:
-            order_quantity += i.quantity
+            order_num += i.quantity
 
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
@@ -31,14 +31,14 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         id = data[0]
         num_potions = data[1]
         num_green_ml = data[2]
-        ml = order_quantity * 100
+        ml = order_num * 100
 
         connection.execute(sqlalchemy.text("""
                                     UPDATE global_inventory
                                     SET num_green_ml = :ml, num_green_potions = :potions
                                     WHERE id = :id;
                                     """),
-                                    {'ml': num_green_ml - ml, 'potions': num_potions + order_quantity, 'id': id})
+                                    {'ml': num_green_ml - ml, 'potions': num_potions + order_num, 'id': id})
 
     return "OK"
 
