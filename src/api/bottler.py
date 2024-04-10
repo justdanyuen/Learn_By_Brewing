@@ -33,22 +33,12 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         num_green_ml = data[2]
         ml = order_quantity * 100
 
-        new_num_green_ml = num_green_ml - ml
-        new_num_potions = num_potions + order_quantity
-
-        update_statement = sqlalchemy.text("""
-            UPDATE global_inventory
-            SET num_green_ml = :ml, num_green_potions = :potions
-            WHERE id = :id;
-        """)
-
-        params = {
-            'ml': new_num_green_ml,
-            'potions': new_num_potions,
-            'id': id
-        }
-
-        connection.execute(update_statement, params)
+        connection.execute(sqlalchemy.text("""
+                                    UPDATE global_inventory
+                                    SET num_green_ml = :ml, num_green_potions = :potions
+                                    WHERE id = :id;
+                                    """),
+                                    {'ml': num_green_ml - ml, 'potions': num_potions + order_quantity, 'id': id})
 
     return "OK"
 
@@ -76,7 +66,7 @@ def get_bottle_plan():
 
     if quantity > 0:
         bottle_plan.append({
-                "potion_type": [0, 100, 0, 0], #hard coded to create just green potions for now...
+                "potion_type": [0, 1, 0, 0], #hard coded to create just green potions for now...
                 "quantity": quantity,
         })
     print(bottle_plan) # for debugging

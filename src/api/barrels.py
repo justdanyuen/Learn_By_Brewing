@@ -35,8 +35,8 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
                 result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
                 data = result.fetchone()
                 id = data[0]
-                num_green_ml = data[3]
-                gold = data[4]
+                num_green_ml = data[2]
+                gold = data[3]
 
                 new_ml = num_green_ml + (ml_per_barrel * quantity)
                 new_gold = gold - (price * quantity)
@@ -55,43 +55,31 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     # print(wholesale_catalog)
 
-    filtered_green_barrels = []
-    num_green_potions = 0
+    filtered_barrels = []
 
-    for i in wholesale_catalog:
-        quantity = i.quantity
-        price = i.price
-        potion_type = i.potion_type
-        ml_per_barrel = i.ml_per_barrel
-
-        if potion_type == [0, 1, 0, 0]:
-            with db.engine.begin() as connection:
-                result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-                data = result.fetchone()
-                id = data[0]
-                num_green_ml = data[2]
-                num_green_potions = data[1]
-                gold = data[3]
-                num_purchase = 0
-                while gold >= price and quantity > 0:
-                    gold -= price
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
+        data = result.fetchone()
+        print("Current database status: " + str(data[1]) + " " + str(data[2]) + " " + str(data[3]))
+        num_green_potions = data[1]
+        gold = data[3]
+        for i in wholesale_catalog:
+            num_purchase = 0
+            available = i.quantity
+            if i.potion_type == [0, 1, 0, 0]: #check if it is a green barrel
+                while gold >= i.price and available > 0:
                     num_purchase += 1
-                    quantity -= 1
+                    gold -= i.price
+                    available -= 1
+                if num_purchase > 0: #add to what i want if I can buy more than 0
+                    filtered_barrels.append({
+                        "sku": i.sku,
+                        "quantity": num_purchase
+                    })
+        if num_green_potions >= 10: #if i already have 10 potions
+            filtered_barrels = []
+    print(filtered_barrels) #for debugging
 
-                if num_purchase > 0:
-                    new_num_green_ml = num_green_ml + (num_purchase * ml_per_barrel)
-                    with db.engine.begin() as connection:
-                        update_stmt = sqlalchemy.text("""
-                        UPDATE global_inventory 
-                        SET num_green_ml = :new_ml, gold = :new_gold 
-                        WHERE id = :id
-                    """)
-                        connection.execute(update_stmt, {'new_ml': new_num_green_ml, 'new_gold': gold, 'id': id})
-                        
-                filtered_green_barrels.append({'id': id, 'num_purchase': num_purchase})
-    if num_green_potions >= 10:
-        return []
-    else:
-        print(filtered_green_barrels)
-        return filtered_green_barrels
+
+    return filtered_barrels
                 
