@@ -20,10 +20,10 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     """ """
     print(f"potions delivered: {potions_delivered} order_id: {order_id}")
 
-    order_num = 0
+    num_req = 0
     for i in potions_delivered:
         if i.potion_type == [0, 100, 0, 0]:
-            order_num += i.quantity
+            num_req += i.quantity
 
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
@@ -31,14 +31,14 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         id = data[0]
         num_potions = data[1]
         num_green_ml = data[2]
-        ml = order_num * 100
+        ml_req = num_req * 100
 
         connection.execute(sqlalchemy.text("""
                                     UPDATE global_inventory
                                     SET num_green_ml = :ml, num_green_potions = :potions
                                     WHERE id = :id;
                                     """),
-                                    {'ml': num_green_ml - ml, 'potions': num_potions + order_num, 'id': id})
+                                    {'ml': num_green_ml - ml_req, 'potions': num_potions + num_req, 'id': id})
 
     return "OK"
 
@@ -61,12 +61,12 @@ def get_bottle_plan():
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         data = result.fetchone()
-        ml = data[2]
-        quantity = ml // 100 #each potion requires 100ml
+        ml_req = data[2]
+        quantity = ml_req // 100 #each potion requires 100ml
 
     if quantity > 0:
         bottle_plan.append({
-                "potion_type": [0, 1, 0, 0], #hard coded to create just green potions for now...
+                "potion_type": [0, 1, 0, 0],
                 "quantity": quantity,
         })
     print(bottle_plan) # for debugging

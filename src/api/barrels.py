@@ -45,7 +45,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
                 "UPDATE global_inventory SET num_green_ml = :new_ml, gold = :new_gold WHERE id = :id"
                 )
                 with db.engine.begin() as connection:
-                    result = connection.execute(update_statement, new_ml=new_ml, new_gold=new_gold, id=id)
+                    result = connection.execute(update_statement, {'new_ml': new_ml, 'new_gold': new_gold, 'id': id})
 
     return "OK"
 
