@@ -66,7 +66,7 @@ def get_bottle_plan():
 
     if quantity > 0:
         bottle_plan.append({
-                "potion_type": [0, 1, 0, 0],
+                "potion_type": [0, 100, 0, 0],
                 "quantity": quantity,
         })
     print(bottle_plan) # for debugging

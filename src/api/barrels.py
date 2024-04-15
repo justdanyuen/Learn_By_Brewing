@@ -78,7 +78,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     })
         if num_green_potions >= 10: #if i already have 10 potions
             filtered_barrels = []
-    print(filtered_barrels) #for debugging
+    print(f"barrels plan to buy: {filtered_barrels}") #for debugging
 
 
     return filtered_barrels
