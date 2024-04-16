@@ -17,8 +17,8 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         data = result.fetchone()
         num_green_potions = data[1]
-        # if num_green_potions > 0:
-        #     num_green_potions = 1
+        if num_green_potions > 0:
+            num_green_potions = 1
         catalog.append({
             "sku": "GREEN_POTION_0",
             "name": "green potion",
