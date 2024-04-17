@@ -30,6 +30,20 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
         potion_type = i.potion_type
         ml_per_barrel = i.ml_per_barrel
 
+
+        #for barrel_delivered in barrels_delivered:
+        #   gold_paid += barrel_delivered.price * barrel_delivered.quantity
+        #   if barrel_delivered.potiontype == something
+        #       color_ml = barrel.delivered.ml_per_barrel * barrel_delivered.quantity
+        # etc.
+        #   else:
+        #       raise Exception("Invalid potion type")
+
+
+        #   print the status of gold, and each barl ml
+        
+        #execute updates of barrels and gold paid
+
         if potion_type == [0, 1, 0, 0]:
             with db.engine.begin() as connection:
                 result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
@@ -49,6 +63,14 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 
     return "OK"
 
+#def calculate_barrel_to_purchase(catalog, max_to_spend, potion_type, ml_available)
+#   (barrel for barrel in bareel_etnries if barel.price <= max_to_spend and barrel.ml_per_barrel <= ml_available):
+#   key = lambda barrel: barrel.ml_per_barrel
+#   default = none
+#)
+
+
+# if gold > 300 else gold, potion_type, MAX_ML - current_ml)
 # Gets called once a day
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
