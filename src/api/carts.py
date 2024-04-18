@@ -110,7 +110,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
             data = result.fetchone()
-            id = data[0]
+            id = data[0] #id number, unique
             num_potions = data[1]
             gold = data[3]
             connection.execute(sqlalchemy.text(""" 
