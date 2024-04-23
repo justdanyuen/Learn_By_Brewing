@@ -123,6 +123,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         num_blue_potions = globe.num_blue_potions
         num_dark_potions = globe.num_dark_potions
 
+        num_red_ml = globe.num_red_ml
+        num_green_ml = globe.num_green_ml
+        num_blue_ml = globe.num_blue_ml
+        num_dark_ml = globe.num_dark_ml
+
         #split up the catalog into potion type
         red_catalog = [x for x in wholesale_catalog if x.potion_type == [1, 0, 0, 0]]
         green_catalog = [x for x in wholesale_catalog if x.potion_type == [0, 1, 0, 0]]
@@ -152,7 +157,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             wholesale_total += item.quantity
 
         barrels_purchased = 0
-        while gold > min and min != -1 and barrels_purchased < wholesale_total:
+        while gold > min and min != -1 and barrels_purchased < wholesale_total and num_red_ml < 1000 and num_blue_ml < 1000:
 
             for item in red_sorted:
                 if try_purchase_barrels(gold, item, num_red_potions, MIN_POTIONS, barrels_to_purchase) == True:
