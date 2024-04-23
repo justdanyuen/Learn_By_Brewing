@@ -26,11 +26,10 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             num_req += i.quantity
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-        data = result.fetchone()
-        id = data[0]
-        num_potions = data[1]
-        num_green_ml = data[2]
+        result = connection.execute(sqlalchemy.text("SELECT id, num_green_potions, num_green_ml FROM global_inventory")).one()
+        id = result.id
+        num_green_potions = result.num_green_potions
+        num_green_ml = result.num_green_ml
         ml_req = num_req * 100
 
         connection.execute(sqlalchemy.text("""
@@ -38,7 +37,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
                                     SET num_green_ml = :ml, num_green_potions = :potions
                                     WHERE id = :id;
                                     """),
-                                    {'ml': num_green_ml - ml_req, 'potions': num_potions + num_req, 'id': id})
+                                    {'ml': num_green_ml - ml_req, 'potions': num_green_potions + num_req, 'id': id})
 
     return "OK"
 
@@ -59,9 +58,8 @@ def get_bottle_plan():
     bottle_plan = []
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-        data = result.fetchone()
-        ml_req = data[2]
+        result = connection.execute(sqlalchemy.text("SELECT num_green_ml FROM global_inventory")).one()
+        ml_req = result.num_green_ml
         quantity = ml_req // 100 #each potion requires 100ml
 
     if quantity > 0:

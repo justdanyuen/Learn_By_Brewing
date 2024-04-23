@@ -108,16 +108,15 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-            data = result.fetchone()
-            id = data[0] #id number, unique
-            num_potions = data[1]
-            gold = data[3]
+            result = connection.execute(sqlalchemy.text("SELECT id, num_green_potions, gold FROM global_inventory")).one()
+            id = result.id
+            num_green_potions = result.num_green_potions
+            gold = result.gold
             connection.execute(sqlalchemy.text(""" 
                                         UPDATE global_inventory
                                         SET num_green_potions = :potions, gold = :gold
                                         WHERE id = :id;
                                         """),
-                                        {'potions': num_potions - 1, 'gold': gold + 50, 'id': id})
+                                        {'potions': num_green_potions - 1, 'gold': gold + 50, 'id': id})
 
     return {"total_potions_bought": 1, "total_gold_paid": 50}
