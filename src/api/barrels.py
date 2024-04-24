@@ -160,28 +160,32 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         while gold > min and min != -1 and barrels_purchased < wholesale_total:
 
             for item in red_sorted:
-                if try_purchase_barrels(gold, item, num_red_potions, MIN_POTIONS, barrels_to_purchase) == True and num_red_ml < 1000:
-                    gold -= item.price
-                    barrels_purchased += 1
-                    break
+                if num_red_ml < 1000:
+                    if try_purchase_barrels(gold, item, num_red_potions, MIN_POTIONS, barrels_to_purchase) == True:
+                        gold -= item.price
+                        barrels_purchased += 1
+                        break
 
             for item in green_sorted:
-                if try_purchase_barrels(gold, item, num_green_potions, MIN_POTIONS, barrels_to_purchase) == True and num_green_ml < 1000:
-                    gold -= item.price
-                    barrels_purchased += 1
-                    break
+                if num_green_ml < 1000:
+                    if try_purchase_barrels(gold, item, num_green_potions, MIN_POTIONS, barrels_to_purchase) == True:
+                        gold -= item.price
+                        barrels_purchased += 1
+                        break
             
             for item in blue_sorted:
-                if try_purchase_barrels(gold, item, num_blue_potions, MIN_POTIONS, barrels_to_purchase) == True and num_blue_ml < 1000:
-                    gold -= item.price
-                    barrels_purchased += 1
-                    break
+                if num_blue_ml < 1000:
+                    if try_purchase_barrels(gold, item, num_blue_potions, MIN_POTIONS, barrels_to_purchase) == True:
+                        gold -= item.price
+                        barrels_purchased += 1
+                        break
 
             for item in dark_sorted:
-                if try_purchase_barrels(gold, item, num_dark_potions, MIN_POTIONS, barrels_to_purchase) == True and num_dark_ml < 1000:
-                    gold -= item.price
-                    barrels_purchased += 1
-                    break
+                if num_dark_ml < 1000:
+                    if try_purchase_barrels(gold, item, num_dark_potions, MIN_POTIONS, barrels_to_purchase) == True:
+                        gold -= item.price
+                        barrels_purchased += 1
+                        break
             
     print(f"barrels plan to buy: {barrels_to_purchase}") #for debugging
 
