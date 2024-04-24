@@ -89,28 +89,28 @@ def get_bottle_plan():
         num_dark_potions = globe.num_dark_potions
 
         if num_red_potions < 10 and num_red_ml >= 100:
-            quantity = num_red_ml / 100
+            quantity = min(10, num_red_ml // 100)
             bottle_plan.append({
                 "potion_type": [100, 0, 0, 0],
                 "quantity": quantity,
         })
             
         if num_green_potions < 10 and num_green_ml >= 100:
-            quantity = num_green_ml / 100
+            quantity = min(10, num_green_ml // 100)
             bottle_plan.append({
                 "potion_type": [0, 100, 0, 0],
                 "quantity": quantity,
         })
             
         if num_blue_potions < 10 and num_blue_ml >= 100:
-            quantity = num_blue_ml / 100
+            quantity = min(10, num_blue_ml // 100)
             bottle_plan.append({
                 "potion_type": [0, 0, 100, 0],
                 "quantity": quantity,
         })
             
         if num_dark_potions < 10 and num_dark_ml >= 100:
-            quantity = num_dark_ml / 100
+            quantity = min(10, num_dark_ml // 100)
             bottle_plan.append({
                 "potion_type": [0, 0, 0, 100],
                 "quantity": quantity,
