@@ -15,12 +15,9 @@ router = APIRouter(
 def get_inventory():
     """ """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_green_potions, num_green_ml, gold FROM global_inventory")).one()
-        num_potions = result.num_green_potions
-        num_ml = result.num_green_ml
-        num_gold = result.gold
-    print({"number_of_potions": num_potions, "ml_in_barrels": num_ml, "gold": num_gold})
-    return {"number_of_potions": num_potions, "ml_in_barrels": num_ml, "gold": num_gold}
+        red_pot, green_pot, blue_pot, dark_pot, red_ml, green_ml, blue_ml, dark_ml, gold = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, num_dark_potions, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml, gold FROM global_inventory")).one()
+    print({"red potions:": red_pot, " red ml: ": red_ml,"green potions:": green_pot, " green ml: ": green_ml, "blue potions:": blue_pot, " blue ml: ": blue_ml, "dark potions:": dark_pot, " dark ml: ": dark_ml, " gold: ": gold})
+    return {"red potions": red_pot, "red ml": red_ml,"green potions": green_pot, "green ml": green_ml, "blue potions": blue_pot, "blue ml": blue_ml, "dark potions": dark_pot, "dark ml": dark_ml, "gold": gold}
     
 
 # Gets called once a day
