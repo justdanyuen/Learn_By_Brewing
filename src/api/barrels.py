@@ -227,39 +227,3 @@ def check_purchase_plan(sku: str, purchase_plan):
             return i
         
     return -1
-
-
-
-    # print(f"barrel catalog: {wholesale_catalog}")
-
-    # with db.engine.begin() as connection:
-    #     results = connection.execute(sqlalchemy.text("""
-    #                                  SELECT
-    #                                  green_ml,
-    #                                  blue_ml,
-    #                                  red_ml,
-    #                                  dark_ml,
-    #                                  gold,
-    #                                  ml_threshold_normal,
-    #                                  ml_threshold_large,
-    #                                  ml_capacity
-    #                                  FROM global_inventory""")).one()
-        
-    # ml_inventory = [results.red_ml, results.green_ml, results.blue_ml, results.dark_ml]
-    # ml_threshold_normal = results.ml_threshold_normal
-    # ml_threshold_large = results.ml_threshold_large
-    # MAX_ML = results.ml_capacity
-    # barrel_purchases = []
-    # current_ml = sum(ml_inventory)
-    # gold = results.gold
-
-    # selling_large = any(item.sku_startwith('LARGE') for item in wholesale_catalog)
-
-    # threshold = ml_threshold_large if selling_large else ml_threshold_normal
-    # for i, ml in enumerate(ml_inventory):
-    #     if ml < threshold:
-    #         potion_type = [int(j=i) for j in range(4)]
-    #         barrel_purchase = calculate_barrel_to_purchase(wholesale_catalog, gold/4 if gold > 300 else gold, potion_type, MAX_ML - current_ml)
-    #         if barrel_purchase is not None:
-    #             price = next(item.price for item in wholesale_catalog if item.sku == barrel_purchase['sku'])
-    #             ml_per_barrel
