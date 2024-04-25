@@ -14,40 +14,23 @@ def get_catalog():
     catalog = []
 
     with db.engine.begin() as connection:
-        num_green_potions, num_red_potions, num_blue_potions, num_dark_potions = connection.execute(sqlalchemy.text("SELECT num_green_potions, num_red_potions, num_blue_potions, num_dark_potions FROM global_inventory")).fetchone()
-        
-#cursor result in SQL
-        if num_green_potions > 0:
-            catalog.append({
-                "sku": "GREEN_POTION_0",
-                "name": "green potion",
-                "quantity": num_green_potions,
-                "price": 50,
-                "potion_type": [0, 100, 0, 0],
-            })
-        if num_red_potions > 0:
-            catalog.append({
-                "sku": "RED_POTION_0",
-                "name": "red potion",
-                "quantity": num_red_potions,
-                "price": 50,
-                "potion_type": [100, 0, 0, 0],
-            })
-        if num_blue_potions > 0:
-            catalog.append({
-                "sku": "BLUE_POTION_0",
-                "name": "blue potion",
-                "quantity": num_red_potions,
-                "price": 50,
-                "potion_type": [0, 0, 100, 0],
-            })
-        if num_dark_potions > 0:
-            catalog.append({
-                "sku": "BLACK_POTION_0",
-                "name": "black potion",
-                "quantity": num_dark_potions,
-                "price": 50,
-                "potion_type": [0, 0, 0, 100],
-            })
+        result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE quantity > 0;"))
+        for row in result:
+            print("Adding to catalog: " + str(row))
+            sku = row.sku
+            type = [row.red_ml, row.green_ml, row.blue_ml, row.dark_ml]
+            quantity = row.quantity
+            name = row.name
+            price = row.price
+            print("Number of " + str(type) + " potions offered: " + str(quantity))
+            if quantity > 0: # should be unecessary because of our query params but fail-safe
+                catalog.append({
+                    "sku": sku,
+                    "name": name,
+                    "quantity": quantity,
+                    "price": price,
+                    "potion_type": type,
+                })
+
     print(catalog)
     return catalog
