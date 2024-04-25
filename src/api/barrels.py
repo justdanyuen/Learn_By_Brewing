@@ -104,29 +104,16 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     # print(wholesale_catalog)
 
-    MIN_POTIONS = 10
-
     barrels_to_purchase = []
 
     with db.engine.begin() as connection:
-        globe = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory")).one()
+        num_red_ml, num_green_ml, num_blue_ml, num_dark_ml, gold = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml, gold FROM global_inventory")).one()
         print("Global inventory current values:")
-        print("Red Potions:", globe.num_red_potions, "Red ml:", globe.num_red_ml)
-        print("Green Potions:", globe.num_green_potions, "Green ml:", globe.num_green_ml)
-        print("Blue Potions:", globe.num_blue_potions, "Blue ml:", globe.num_blue_ml)
-        print("Dark Potions:", globe.num_dark_potions, "Dark ml:", globe.num_dark_ml)
-        print("Gold:", globe.gold)
-
-        gold = globe.gold
-        num_red_potions = globe.num_red_potions
-        num_green_potions = globe.num_green_potions
-        num_blue_potions = globe.num_blue_potions
-        num_dark_potions = globe.num_dark_potions
-
-        num_red_ml = globe.num_red_ml
-        num_green_ml = globe.num_green_ml
-        num_blue_ml = globe.num_blue_ml
-        num_dark_ml = globe.num_dark_ml
+        print("Red ml:", num_red_ml)
+        print("Green ml:", num_green_ml)
+        print("Blue ml:", num_blue_ml)
+        print("Dark ml:",num_dark_ml)
+        print("Gold:", gold)
 
         #split up the catalog into potion type
         red_catalog = [x for x in wholesale_catalog if x.potion_type == [1, 0, 0, 0]]
@@ -151,7 +138,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         # if number_of_potions[potion_type] < 10 AND gold >= filtered_barrels[0].price
 
         min = find_min_price(wholesale_catalog)
+        print("Minimum price: ", min)
         
+        print("Red sorted: ", red_sorted)
         wholesale_total = 0
         for item in wholesale_catalog:
             wholesale_total += item.quantity
@@ -161,28 +150,28 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
             for item in red_sorted:
                 if num_red_ml < 1000:
-                    if try_purchase_barrels(gold, item, num_red_potions, MIN_POTIONS, barrels_to_purchase) == True:
+                    if try_purchase_barrels(gold, item, barrels_to_purchase) == True:
                         gold -= item.price
                         barrels_purchased += 1
                         break
 
             for item in green_sorted:
                 if num_green_ml < 1000:
-                    if try_purchase_barrels(gold, item, num_green_potions, MIN_POTIONS, barrels_to_purchase) == True:
+                    if try_purchase_barrels(gold, item, barrels_to_purchase) == True:
                         gold -= item.price
                         barrels_purchased += 1
                         break
             
             for item in blue_sorted:
                 if num_blue_ml < 1000:
-                    if try_purchase_barrels(gold, item, num_blue_potions, MIN_POTIONS, barrels_to_purchase) == True:
+                    if try_purchase_barrels(gold, item, barrels_to_purchase) == True:
                         gold -= item.price
                         barrels_purchased += 1
                         break
 
             for item in dark_sorted:
                 if num_dark_ml < 1000:
-                    if try_purchase_barrels(gold, item, num_dark_potions, MIN_POTIONS, barrels_to_purchase) == True:
+                    if try_purchase_barrels(gold, item, barrels_to_purchase) == True:
                         gold -= item.price
                         barrels_purchased += 1
                         break
@@ -202,11 +191,9 @@ def find_min_price(wholesale_catalog: list[Barrel]):
 
     return min_price
 
-def try_purchase_barrels(gold, barrel, current_potions, min_potions, barrels_to_purchase):
-    if current_potions >= min_potions:
-        return False
+def try_purchase_barrels(gold, barrel, barrels_to_purchase):
 
-    if barrel.price <= gold and barrel.quantity > 0 and current_potions < min_potions:
+    if barrel.price <= gold and barrel.quantity > 0:
         check = check_purchase_plan(barrel.sku, barrels_to_purchase)
         if check == -1:
             barrels_to_purchase.append({
