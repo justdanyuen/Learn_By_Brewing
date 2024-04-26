@@ -152,7 +152,7 @@ def get_bottle_plan():
     with db.engine.begin() as connection:
         num_red_ml, num_green_ml, num_blue_ml, num_dark_ml = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory")).one()
 
-        potion_inventory = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory ORDER BY id ASC;")).fetchall()
+        potion_inventory = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory ORDER BY quantity ASC;")).fetchall()
 
         bottle_plan = make_potions(num_red_ml, num_green_ml, num_blue_ml, num_dark_ml, potion_inventory)
     
