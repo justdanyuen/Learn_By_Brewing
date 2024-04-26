@@ -22,7 +22,7 @@ def get_inventory():
         total_potions = 0
         for potion in potions:
             total_potions += potion.quantity
-    
+    print({"number_of_potions": total_potions, "ml_in_barrels": total_ml, "gold": gold})
     return {"number_of_potions": total_potions, "ml_in_barrels": total_ml, "gold": gold}
 
 # Gets called once a day

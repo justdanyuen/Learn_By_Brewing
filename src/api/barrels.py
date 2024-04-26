@@ -145,32 +145,32 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         for item in wholesale_catalog:
             wholesale_total += item.quantity
 
-        while any([num_red_ml < 1000, num_green_ml < 1000, num_blue_ml < 1000, num_dark_ml < 1000]) and gold > 0:
+        while any([num_red_ml < 200, num_green_ml < 200, num_blue_ml < 200, num_dark_ml < 200]) and gold > 0:
             updated = False
 
             for item in red_sorted:
-                if num_red_ml < 1000 and gold >= item.price:
+                if num_red_ml < 200 and gold >= item.price:
                     if try_purchase_barrels(gold, item, barrels_to_purchase):
                         gold -= item.price
                         num_red_ml += item.ml_per_barrel
                         updated = True
 
             for item in green_sorted:
-                if num_green_ml < 1000 and gold >= item.price:
+                if num_green_ml < 200 and gold >= item.price:
                     if try_purchase_barrels(gold, item, barrels_to_purchase):
                         gold -= item.price
                         num_green_ml += item.ml_per_barrel
                         updated = True
 
             for item in blue_sorted:
-                if num_blue_ml < 1000 and gold >= item.price:
+                if num_blue_ml < 200 and gold >= item.price:
                     if try_purchase_barrels(gold, item, barrels_to_purchase):
                         gold -= item.price
                         num_blue_ml += item.ml_per_barrel
                         updated = True
 
             for item in dark_sorted:
-                if num_dark_ml < 1000 and gold >= item.price:
+                if num_dark_ml < 200 and gold >= item.price:
                     if try_purchase_barrels(gold, item, barrels_to_purchase):
                         gold -= item.price
                         num_dark_ml += item.ml_per_barrel

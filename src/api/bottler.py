@@ -58,17 +58,18 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
                                     })
                 print("inserting potion type: " + str(type))
             else:
-                # update
-                print("Current potion updating: " + str(potion))
-                current_quantity = potion.quantity
+                # Fetch current quantity from the database first
+                current_quantity = potion_sku.quantity  # Assuming quantity is fetched correctly from the DB
+                new_quantity = current_quantity + quantity  # Add the newly delivered quantity to the existing one
+
+                # Update the database with the new total quantity
                 connection.execute(sqlalchemy.text("""
-                                            UPDATE potion_inventory
-                                            SET quantity = :quantity
-                                            WHERE sku = :sku;
-                                            """),
-                                            {'quantity': quantity + current_quantity, 
-                                            'name': name,
-                                            'sku': sku})
+                                                    UPDATE potion_inventory
+                                                    SET quantity = :new_quantity
+                                                    WHERE sku = :sku;
+                                                    """),
+                                                    {'new_quantity': new_quantity, 
+                                                    'sku': sku})
             red_used += potion.potion_type[0] * potion.quantity
             green_used += potion.potion_type[1] * potion.quantity
             blue_used += potion.potion_type[2] * potion.quantity
@@ -170,7 +171,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory):
     for recipe in potion_inventory:
         # print(f"total ml: {total_ml}")
         # print(f"recipe id: {recipe.id} sku: {recipe.sku}: quantity: {recipe.quantity}")
-        if recipe.quantity > 4:
+        if recipe.quantity >= 3:
             continue  # Skip to the next recipe if already enough stock
         if total_ml > 100:
             quantity = 0
