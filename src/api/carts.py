@@ -89,9 +89,17 @@ def create_cart(new_cart: Customer):
     """ """
 
     with db.engine.begin() as connection:
-        cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (customer) VALUES (:customer_name) RETURNING id"), {"customer_name": new_cart.customer_name}).scalar_one()
+        
+        id = connection.execute(sqlalchemy.text("INSERT INTO carts (name, class, level) VALUES (:name, :class, :level) returning id;"),
+                                    {
+                                        'name': new_cart.customer_name,
+                                        'class': new_cart.character_class,
+                                        'level': new_cart.level
+                                    }).fetchone()[0]
 
-    return {"cart_id": cart_id}
+        print("Cart: " + str(id) + " " + new_cart.customer_name + " " + new_cart.character_class + " " + str(new_cart.level))
+
+    return {"cart_id": id} # trying to return cart_id as an int instead to hopefully resolve an error?
 
 
 class CartItem(BaseModel):
@@ -120,16 +128,16 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         cart_contents = connection.execute(sqlalchemy.text("SELECT quantity, item_sku  FROM cart_items WHERE cart_id = :cart_id"), {"cart_id": cart_id}).fetchall()
         for item in cart_contents:
             quantity, item_sku = item
-            price, stock =  connection.execute(sqlalchemy.text("SELECT price, quantity FROM potions WHERE sku = :item_sku"), {"item_sku": item_sku }).first()
+            price, stock =  connection.execute(sqlalchemy.text("SELECT price, quantity FROM potion_inventory WHERE sku = :item_sku"), {"item_sku": item_sku }).first()
 
             if quantity <= stock:
                 potions_bought += quantity
                 gold_spent += (quantity * price)
                 connection.execute(sqlalchemy.text (
                         """
-                        UPDATE potions
-                        SET quantity = potions.quantity - :quantity
-                        WHERE potions.sku = :sku
+                        UPDATE potion_inventory
+                        SET quantity = potion_inventory.quantity - :quantity
+                        WHERE potion_inventory.sku = :sku
                         """
                     ), {"quantity": quantity, "sku": item_sku})
                 connection.execute(sqlalchemy.text (
@@ -141,4 +149,4 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             else:
                 quantity = 0
 
-    return {"potions_bought_bought": potions_bought, "total_gold_paid": gold_spent}
+    return {"potions_bought": potions_bought, "total_gold_paid": gold_spent}
