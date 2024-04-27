@@ -171,8 +171,8 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory):
     for recipe in potion_inventory:
         # print(f"total ml: {total_ml}")
         # print(f"recipe id: {recipe.id} sku: {recipe.sku}: quantity: {recipe.quantity}")
-        if recipe.quantity >= 3:
-            continue  # Skip to the next recipe if already enough stock
+        if recipe.quantity >= 1:
+            continue  # Skip to the next recipe if there is at least one potion
         if total_ml > 100:
             quantity = 0
             # Loop will execute only if there's enough stock and required materials are available
