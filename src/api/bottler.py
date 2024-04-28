@@ -22,6 +22,7 @@ potions_library = {
     (0, 0, 100, 0): "blue potion",
     (0, 0, 0, 100): "black potion",
     (50, 0, 50, 0): "purple potion",
+    (50, 50, 0, 0): "yellow potion",
     (33, 34, 33, 0): "white potion"
 }
 @router.post("/deliver/{order_id}")
