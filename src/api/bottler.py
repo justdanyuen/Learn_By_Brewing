@@ -71,10 +71,10 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
                                                     """),
                                                     {'new_quantity': new_quantity, 
                                                     'sku': sku})
-            red_used += potion.potion_type[0] * potion.quantity
-            green_used += potion.potion_type[1] * potion.quantity
-            blue_used += potion.potion_type[2] * potion.quantity
-            dark_used += potion.potion_type[3] * potion.quantity
+            red_used += potion.potion_type[0] * quantity
+            green_used += potion.potion_type[1] * quantity
+            blue_used += potion.potion_type[2] * quantity
+            dark_used += potion.potion_type[3] * quantity
 
             red_ml, green_ml, blue_ml, dark_ml = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory")).one()
 
