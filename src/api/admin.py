@@ -29,6 +29,10 @@ def reset():
                 
                 # reset/clear potion_inventory, carts, cart_items
                 connection.execute(sqlalchemy.text("UPDATE potion_inventory SET quantity = 0;"))
+                # set carts / cart items to nonactive for this run, but still save results
+                connection.execute(sqlalchemy.text("UPDATE carts SET current_shop = False;"))
+                connection.execute(sqlalchemy.text("UPDATE cart_items SET current_shop = False;"))
+
 
                  
     return "OK"
