@@ -78,17 +78,17 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
 
             red_ml, green_ml, blue_ml, dark_ml = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory")).one()
 
-            red_ml -= red_used
-            green_ml -= green_used
-            blue_ml -= blue_used
-            dark_ml -= dark_used
+        red_ml -= red_used
+        green_ml -= green_used
+        blue_ml -= blue_used
+        dark_ml -= dark_used
 
-            connection.execute(sqlalchemy.text("""
-                                    UPDATE global_inventory
-                                    SET num_green_ml = :green, num_red_ml = :red, num_blue_ml = :blue, num_dark_ml = :dark
-                                    WHERE id = 1;
-                                    """),
-                                    {'green': green_ml, 'red': red_ml, 'blue': blue_ml, 'dark': dark_ml})
+        connection.execute(sqlalchemy.text("""
+                                UPDATE global_inventory
+                                SET num_green_ml = :green, num_red_ml = :red, num_blue_ml = :blue, num_dark_ml = :dark
+                                WHERE id = 1;
+                                """),
+                                {'green': green_ml, 'red': red_ml, 'blue': blue_ml, 'dark': dark_ml})
             
     return "OK"
 
