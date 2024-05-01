@@ -127,7 +127,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             FROM ml_ledger
             GROUP BY barrel_type
             """
-        )).fetchall()
+        )).mappings().all()
 
         gold_total = connection.execute(sqlalchemy.text(
             "SELECT SUM(net_change) FROM gold_ledger"
