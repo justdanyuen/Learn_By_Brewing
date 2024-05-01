@@ -46,7 +46,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
                     """), {
                     'potion_id': potion_id,
                     'quantity': potion.quantity,
-                    'cost': price_per_unit * potion.quantity,
+                    'cost': price_per_unit,
                     'transaction': json.dumps({'order_id': order_id, 'ml_per_type': potion.potion_type}),
                     'function': "post_deliver_bottles"
                 })
