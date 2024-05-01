@@ -133,13 +133,22 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
         for item in cart_contents:
             quantity, item_sku = item
-            # Retrieve price and stock from the potion inventory
+            # Retrieve price from the potion inventory
             potion_data = connection.execute(sqlalchemy.text(
-                "SELECT id, price, quantity FROM potion_inventory WHERE sku = :item_sku"), 
+                "SELECT id, price FROM potion_inventory WHERE sku = :item_sku"), 
                 {"item_sku": item_sku}).first()
 
-            if potion_data and quantity <= potion_data.quantity:
-                potion_id, price, stock = potion_data
+            # Calculate the current inventory of this potion from the ledger
+            current_quantity = connection.execute(sqlalchemy.text(
+                """
+                SELECT SUM(quantity) as total_quantity 
+                FROM potion_ledger 
+                WHERE potion_id = :potion_id
+                """), 
+                {"potion_id": potion_data.id}).scalar() or 0
+
+            if potion_data and quantity <= current_quantity:
+                potion_id, price = potion_data
                 total_cost = quantity * price
                 potions_bought += quantity
                 gold_spent += total_cost
@@ -148,11 +157,11 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 connection.execute(sqlalchemy.text(
                     """
                     INSERT INTO potion_ledger (potion_id, quantity, function, transaction, cost)
-                    VALUES (:potion_id, :quantity, 'sale', :transaction, :cost);
+                    VALUES (:potion_id, - :quantity, 'sale', :transaction, :cost);
                     """),
                     {
                         "potion_id": potion_id,
-                        "quantity": -quantity,  # Negative because it's a sale
+                        "quantity": quantity,  # Negative because it's a sale
                         "function": "checkout",
                         "transaction": json.dumps({"cart_id": cart_id, "item_sku": item_sku}),
                         "cost": total_cost
@@ -166,7 +175,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     VALUES (:net_change, 'checkout', :transaction);
                     """),
                     {
-                        'net_change': -total_cost,  # Negative because it is an expenditure
+                        'net_change': total_cost,  # Negative because it is an expenditure
                         'transaction': json.dumps({"cart_id": cart_id, "item_sku": item_sku, "quantity": quantity})
                     }
                 )

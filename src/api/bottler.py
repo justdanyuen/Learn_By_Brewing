@@ -21,7 +21,6 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     print(f"potions delivered: {potions_delivered} order_id: {order_id}")
 
     ml_changes = {'red': 0, 'green': 0, 'blue': 0, 'dark': 0}
-    total_cost = 0
 
     with db.engine.begin() as connection:
         for potion in potions_delivered:
@@ -39,8 +38,6 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
                 potion_id = potion_type_info['id']
                 sku = potion_type_info['sku']
                 price_per_unit = potion_type_info['price']
-                transaction_cost = potion.quantity * price_per_unit
-                total_cost += transaction_cost
 
                 # Record transaction in potion_ledger
                 connection.execute(sqlalchemy.text("""
@@ -49,7 +46,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
                     """), {
                     'potion_id': potion_id,
                     'quantity': potion.quantity,
-                    'cost': transaction_cost,
+                    'cost': price_per_unit * potion.quantity,
                     'transaction': json.dumps({'order_id': order_id, 'ml_per_type': potion.potion_type}),
                     'function': "post_deliver_bottles"
                 })
@@ -82,60 +79,74 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
 @router.post("/plan")
 def get_bottle_plan():
     """
-    Go from barrel to bottle.
+    Dynamically computes the plan to bottle potions from barrels based on the transaction records in ml_ledger and potion_ledger.
     """
-
-    # Each bottle has a quantity of what proportion of red, blue, and
-    # green potion to add.
-    # Expressed in integers from 1 to 100 that must sum up to 100.
-
-    # Initial logic: bottle all barrels into red potions.
-
-    
-    bottle_plan = []
-
     with db.engine.begin() as connection:
-        num_red_ml, num_green_ml, num_blue_ml, num_dark_ml = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory")).one()
+        # Retrieve all records from ml_ledger
+        ml_ledger_entries = connection.execute(sqlalchemy.text(
+            "SELECT barrel_type, net_change FROM ml_ledger;"
+        )).mappings().all()
 
-        potion_inventory = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory ORDER BY quantity ASC;")).fetchall()
+        # Initialize ml counts for each color
+        ml_totals = {'red': 0, 'green': 0, 'blue': 0, 'dark': 0}
+        for entry in ml_ledger_entries:
+            color = entry['barrel_type']
+            if color in ml_totals:
+                ml_totals[color] += entry['net_change']
 
-        bottle_plan = make_potions(num_red_ml, num_green_ml, num_blue_ml, num_dark_ml, potion_inventory)
-    
-    print(bottle_plan) # for debugging
+        print(f"{ml_totals}\n\n")
+
+        # Fetch potion inventory without relying on quantity column
+        potion_inventory = connection.execute(sqlalchemy.text(
+            "SELECT id, sku, name, price, red_ml, green_ml, blue_ml, dark_ml FROM potion_inventory;"
+        )).mappings().all()
+
+        # Calculate available quantities from potion_ledger
+        potion_quantities = {}
+        potion_ledger_entries = connection.execute(sqlalchemy.text(
+            "SELECT potion_id, SUM(quantity) AS total_quantity FROM potion_ledger GROUP BY potion_id;"
+        )).mappings().all()
+
+        print(f"{potion_ledger_entries}\n\n")
+
+        for entry in potion_ledger_entries:
+            potion_quantities[entry['potion_id']] = entry['total_quantity']
+
+        # Calculate how many potions can be made from the current ml totals
+        bottle_plan = make_potions(ml_totals['red'], ml_totals['green'], ml_totals['blue'], ml_totals['dark'], potion_inventory, potion_quantities)
+
     return bottle_plan
 
-def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory):
+def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_quantities):
     print(f"red_ml: {red_ml} green_ml: {green_ml} blue_ml: {blue_ml} dark_ml: {dark_ml}")
-    for row in potion_inventory:
-        print(f"id: {row.id} sku: {row.sku} name: {row.name} r: {row.red_ml} g: {row.green_ml} b: {row.blue_ml} d: {row.dark_ml} quantity: {row.quantity} price: {row.price}")
-    bottle_plan = []
-
-    total_ml = red_ml + green_ml + blue_ml + dark_ml
-
-    print(f"total ml: {total_ml}")
     for recipe in potion_inventory:
-        # print(f"total ml: {total_ml}")
-        # print(f"recipe id: {recipe.id} sku: {recipe.sku}: quantity: {recipe.quantity}")
-        if recipe.quantity >= 1:
+        current_quantity = potion_quantities.get(recipe['id'], 0)  # Default to 0 if no entry exists
+        print(f"id: {recipe['id']} sku: {recipe['sku']} name: {recipe['name']} r: {recipe['red_ml']} g: {recipe['green_ml']} b: {recipe['blue_ml']} d: {recipe['dark_ml']} quantity: {current_quantity} price: {recipe['price']}")
+
+    bottle_plan = []
+    total_ml = red_ml + green_ml + blue_ml + dark_ml
+    print(f"total ml: {total_ml}")
+
+    for recipe in potion_inventory:
+        current_quantity = potion_quantities.get(recipe['id'], 0)
+        if current_quantity >= 1:
             continue  # Skip to the next recipe if there is at least one potion
         if total_ml > 100:
             quantity = 0
-            # Loop will execute only if there's enough stock and required materials are available
-            # print(f"Checking availability - red: {red_ml}/{recipe.red_ml}, green: {green_ml}/{recipe.green_ml}, blue: {blue_ml}/{recipe.blue_ml}, dark: {dark_ml}/{recipe.dark_ml}")
-            while (red_ml >= recipe.red_ml and green_ml >= recipe.green_ml and
-                blue_ml >= recipe.blue_ml and dark_ml >= recipe.dark_ml and quantity < 3):
+            while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
+                   blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and quantity < 3):
                 quantity += 1
-                red_ml -= recipe.red_ml
-                green_ml -= recipe.green_ml
-                blue_ml -= recipe.blue_ml
-                dark_ml -= recipe.dark_ml
+                red_ml -= recipe['red_ml']
+                green_ml -= recipe['green_ml']
+                blue_ml -= recipe['blue_ml']
+                dark_ml -= recipe['dark_ml']
             if quantity > 0:
                 bottle_plan.append({
-                "potion_type": [recipe.red_ml, recipe.green_ml, recipe.blue_ml, recipe.dark_ml],
-                "quantity": quantity
+                    "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
+                    "quantity": quantity
                 })
     print(bottle_plan)
     return bottle_plan
-            
+
 if __name__ == "__main__":
     print(get_bottle_plan())

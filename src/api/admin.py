@@ -17,25 +17,28 @@ def reset():
     inventory, and all barrels are removed from inventory. Carts are all reset.
     """
     with db.engine.begin() as connection:
-                # reset global_inventory
-                result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory;")) # for debugging
-                globe = result.fetchone()
-                print("Current database status before reset: " + str(globe[1]) + " " + str(globe[2]) + " " + str(globe[3]) + " " + str(globe[4]) + " " + str(globe[5])) # for debugging
-                connection.execute(sqlalchemy.text("""
-                                                UPDATE global_inventory
-                                                SET num_green_ml = 0, gold = 100, num_dark_ml = 0, num_red_ml = 0, num_blue_ml = 0
-                                                WHERE id = 1;
-                                                """))
-                
-                # reset/clear potion_inventory, carts, cart_items
-                connection.execute(sqlalchemy.text("UPDATE potion_inventory SET quantity = 0;"))
-                # set carts / cart items to nonactive for this run, but still save results
-                connection.execute(sqlalchemy.text("UPDATE carts SET current_shop = False;"))
-                connection.execute(sqlalchemy.text("UPDATE cart_items SET current_shop = False;"))
-                connection.execute(sqlalchemy.text("DELETE FROM gold_ledger;"))
-                connection.execute(sqlalchemy.text("DELETE FROM ml_ledger;"))
-                connection.execute(sqlalchemy.text("DELETE FROM potion_ledger;"))
+        # reset/clear potion_inventory, carts, cart_items
+        # set carts / cart items to nonactive for this run, but still save results
+        connection.execute(sqlalchemy.text("DELETE FROM carts;"))
+        connection.execute(sqlalchemy.text("DELETE FROM cart_items;"))
+        connection.execute(sqlalchemy.text("DELETE FROM gold_ledger;"))
+        connection.execute(sqlalchemy.text("DELETE FROM ml_ledger;"))
+        connection.execute(sqlalchemy.text("DELETE FROM potion_ledger;"))
 
+        # Reset the ID sequences for all tables with auto-incremented IDs
+        connection.execute(sqlalchemy.text("ALTER SEQUENCE carts_id_seq RESTART WITH 1;"))
+        connection.execute(sqlalchemy.text("ALTER SEQUENCE cart_items_id_seq RESTART WITH 1;"))
+        connection.execute(sqlalchemy.text("ALTER SEQUENCE gold_ledger_id_seq RESTART WITH 1;"))
+        connection.execute(sqlalchemy.text("ALTER SEQUENCE ml_ledger_id_seq RESTART WITH 1;"))
+        connection.execute(sqlalchemy.text("ALTER SEQUENCE potion_ledger_id_seq RESTART WITH 1;"))
+
+        # Reinitialize the gold to 100
+        connection.execute(sqlalchemy.text("""
+            INSERT INTO gold_ledger (net_change, function, transaction)
+            VALUES (100, 'reset', 'Initial gold set to 100 upon reset');
+            """))
+
+    print("Game state has been reset. All ledgers cleared and gold set to 100.")
 
     return "OK"
 

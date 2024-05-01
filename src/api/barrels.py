@@ -45,64 +45,61 @@ def filter_and_format_barrels(barrels, potion_type):
 
 @router.post("/deliver/{order_id}")
 def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
-    """ """
-
+    """ Process delivery of barrels and update financial and stock ledgers. """
     barrels_json = json.dumps([barrel_to_dict(barrel) for barrel in barrels_delivered])
 
     potion_data = {
-        "red": [0, [], []],  # new_ml, potion_type, barrels_json
-        "green": [0, [], []],
-        "blue": [0, [], []],
-        "dark": [0, [], []]
+        "red": [0, []],
+        "green": [0, []],
+        "blue": [0, []],
+        "dark": [0, []]
     }
-    cost = 0
+    total_cost = 0
 
-    for item in barrels_delivered:
-        quantity = item.quantity
-        ml_per_barrel = item.ml_per_barrel
-        price = item.price
-        potion_type_key = "unknown"  # Default case
+    for barrel in barrels_delivered:
+        quantity = barrel.quantity
+        ml_per_barrel = barrel.ml_per_barrel
+        price = barrel.price
+        potion_type_key = None  # Initialize with None to check for valid assignment
 
-        if item.potion_type == [1, 0, 0, 0]:
+        # Determine the color key based on potion_type
+        if barrel.potion_type == [1, 0, 0, 0]:
             potion_type_key = "red"
-        elif item.potion_type == [0, 1, 0, 0]:
+        elif barrel.potion_type == [0, 1, 0, 0]:
             potion_type_key = "green"
-        elif item.potion_type == [0, 0, 1, 0]:
+        elif barrel.potion_type == [0, 0, 1, 0]:
             potion_type_key = "blue"
-        elif item.potion_type == [0, 0, 0, 1]:
+        elif barrel.potion_type == [0, 0, 0, 1]:
             potion_type_key = "dark"
 
-        if potion_type_key != "unknown":
-            potion_data[potion_type_key][0] += quantity * ml_per_barrel
-            potion_data[potion_type_key][1] = item.potion_type
-            potion_data[potion_type_key][2].append(barrel_to_dict(item))
-        cost -= price * quantity
+        if potion_type_key:  # If a valid key is found
+            ml_increase = quantity * ml_per_barrel
+            potion_data[potion_type_key][0] += ml_increase
+            potion_data[potion_type_key][1].append(barrel_to_dict(barrel))
+            total_cost += price * quantity
 
     with db.engine.begin() as connection:
         try:
+            # Update the gold ledger
             connection.execute(sqlalchemy.text("""
                 INSERT INTO gold_ledger (net_change, function, transaction)
-                VALUES (:cost, :function, :transaction);
-            """), {'cost': cost, 'function': "post_deliver_barrels", 'transaction': barrels_json})
+                VALUES (:cost, 'deliver_barrels', :transaction);
+            """), {'cost': -total_cost, 'transaction': barrels_json})
 
-            # insert the ml ledger change selectively for each type of potion
-            insert_ml_ledger = sqlalchemy.text("""
-                INSERT INTO ml_ledger (net_change, barrel_type, function, transaction)
-                VALUES (:ml_in_barrel, :barrel_type, :function, :transaction);
-            """)
-
-            for data in potion_data.values():
-                new_ml, potion_type, barrels_info = data
-                if new_ml > 0:
-                    connection.execute(insert_ml_ledger, {
-                        'ml_in_barrel': new_ml,
-                        'barrel_type': potion_type,
-                        'function': "post_deliver_barrels",
+            # Insert changes into the ml_ledger
+            for color, (ml_change, barrels_info) in potion_data.items():
+                if ml_change > 0:
+                    connection.execute(sqlalchemy.text("""
+                        INSERT INTO ml_ledger (net_change, barrel_type, function, transaction)
+                        VALUES (:ml_change, :barrel_type, 'deliver_barrels', :transaction);
+                    """), {
+                        'ml_change': ml_change,
+                        'barrel_type': color,
                         'transaction': json.dumps(barrels_info)
                     })
         except Exception as e:
             print(f"An error occurred: {e}")
-            connection.rollback()  # Rollback in case of any error
+            connection.rollback()
 
     return "OK"
 
@@ -119,102 +116,71 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 # Gets called once a day
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
-
-    """ """
-    # print(wholesale_catalog)
-
+    """ Determine the optimal barrels to purchase based on current ml and gold statuses in ledgers. """
     barrels_to_purchase = []
 
     with db.engine.begin() as connection:
-        num_red_ml, num_green_ml, num_blue_ml, num_dark_ml, gold = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml, gold FROM global_inventory")).one()
-        print("Global inventory current values:")
-        print("Red ml:", num_red_ml)
-        print("Green ml:", num_green_ml)
-        print("Blue ml:", num_blue_ml)
-        print("Dark ml:",num_dark_ml)
-        print("Gold:", gold)
+        # Retrieve current ml amounts and total gold from ledgers
+        ml_totals = connection.execute(sqlalchemy.text(
+            """
+            SELECT barrel_type, SUM(net_change) AS total_ml
+            FROM ml_ledger
+            GROUP BY barrel_type
+            """
+        )).fetchall()
 
-        #split up the catalog into potion type
-        red_catalog = [x for x in wholesale_catalog if x.potion_type == [1, 0, 0, 0]]
-        green_catalog = [x for x in wholesale_catalog if x.potion_type == [0, 1, 0, 0]]
-        blue_catalog = [x for x in wholesale_catalog if x.potion_type == [0, 0, 1, 0]]
-        dark_catalog = [x for x in wholesale_catalog if x.potion_type == [0, 0, 0, 1]]
+        gold_total = connection.execute(sqlalchemy.text(
+            "SELECT SUM(net_change) FROM gold_ledger"
+        )).scalar() or 0
 
+        # Initialize ml counts from the fetched data
+        ml_counts = {'red': 0, 'green': 0, 'blue': 0, 'dark': 0}
+        for ml in ml_totals:
+            if ml['barrel_type'] in ml_counts:
+                ml_counts[ml['barrel_type']] = ml['total_ml']
 
-        # order from least to greatest in price so that the cheapest is at the front
-        red_sorted = sorted(red_catalog, key=lambda x: x.price / x.ml_per_barrel)
-        green_sorted = sorted(green_catalog, key=lambda x: x.price / x.ml_per_barrel)
-        blue_sorted = sorted(blue_catalog, key=lambda x: x.price / x.ml_per_barrel)
-        dark_sorted = sorted(dark_catalog, key=lambda x: x.price / x.ml_per_barrel)
+        print(f"Current ml values - {ml_counts}")
+        print(f"Current gold: {gold_total}")
 
+        # Split the catalog into potion types
+        potion_type_catalogs = {
+            'red': [],
+            'green': [],
+            'blue': [],
+            'dark': []
+        }
+        for barrel in wholesale_catalog:
+            if barrel.potion_type == [1, 0, 0, 0]:
+                potion_type_catalogs['red'].append(barrel)
+            elif barrel.potion_type == [0, 1, 0, 0]:
+                potion_type_catalogs['green'].append(barrel)
+            elif barrel.potion_type == [0, 0, 1, 0]:
+                potion_type_catalogs['blue'].append(barrel)
+            elif barrel.potion_type == [0, 0, 0, 1]:
+                potion_type_catalogs['dark'].append(barrel)
 
-        # Print sorted lists for debugging or analysis
-        print("Sorted Red Offers:", red_sorted)
-        print("Sorted Green Offers:", green_sorted)
-        print("Sorted Blue Offers:", blue_sorted)
-        print("Sorted Dark Offers:", dark_sorted)
+        # Sort each type by cost-effectiveness
+        for color in potion_type_catalogs:
+            potion_type_catalogs[color].sort(key=lambda x: x.price / x.ml_per_barrel)
 
-        # if number_of_potions[potion_type] < 10 AND gold >= filtered_barrels[0].price
-
-        min = find_min_price(wholesale_catalog)
-        print("Minimum price: ", min)
-        
-        print("Red sorted: ", red_sorted)
-        wholesale_total = 0
-        for item in wholesale_catalog:
-            wholesale_total += item.quantity
-
-        while any([num_red_ml < 200, num_green_ml < 200, num_blue_ml < 200, num_dark_ml < 200]) and gold > 0:
+        # Purchase decision logic
+        while any(ml_counts[color] < 200 for color in ml_counts) and gold_total > 0:
             updated = False
-
-            for item in green_sorted:
-                if num_green_ml < 200 and gold >= item.price:
-                    if try_purchase_barrels(gold, item, barrels_to_purchase):
-                        gold -= item.price
-                        num_green_ml += item.ml_per_barrel
-                        updated = True
-
-            for item in red_sorted:
-                    if num_red_ml < 200 and gold >= item.price:
-                        if try_purchase_barrels(gold, item, barrels_to_purchase):
-                            gold -= item.price
-                            num_red_ml += item.ml_per_barrel
+            for color, catalog in potion_type_catalogs.items():
+                for barrel in catalog:
+                    if ml_counts[color] < 200 and gold_total >= barrel.price:
+                        if try_purchase_barrels(gold_total, barrel, barrels_to_purchase):
+                            gold_total -= barrel.price
+                            ml_counts[color] += barrel.ml_per_barrel
                             updated = True
 
-            for item in blue_sorted:
-                if num_blue_ml < 200 and gold >= item.price:
-                    if try_purchase_barrels(gold, item, barrels_to_purchase):
-                        gold -= item.price
-                        num_blue_ml += item.ml_per_barrel
-                        updated = True
-
-            for item in dark_sorted:
-                if num_dark_ml < 200 and gold >= item.price:
-                    if try_purchase_barrels(gold, item, barrels_to_purchase):
-                        gold -= item.price
-                        num_dark_ml += item.ml_per_barrel
-                        updated = True
-
-            # If no updates were possible in a full pass, break to avoid infinite loop
             if not updated:
                 break
 
-    print(f"barrels plan to buy: {barrels_to_purchase}") #for debugging
-
-    return barrels_to_purchase                
-
-def find_min_price(wholesale_catalog: list[Barrel]):
-    min_price = -1
-    for item in wholesale_catalog:
-        if min_price == -1: # only caught on first time (or never)
-            min_price = item.price
-        elif item.price < min_price:
-            min_price = item.price
-
-    return min_price
+        print(f"Barrels to purchase: {barrels_to_purchase}")
+    return barrels_to_purchase             
 
 def try_purchase_barrels(gold, barrel, barrels_to_purchase):
-
     if barrel.price <= gold and barrel.quantity > 0:
         check = check_purchase_plan(barrel.sku, barrels_to_purchase)
         if check == -1:
@@ -226,16 +192,13 @@ def try_purchase_barrels(gold, barrel, barrels_to_purchase):
                 "price": barrel.price
             })
         else:
-            barrels_to_purchase[check]["quantity"] = barrels_to_purchase[check]["quantity"] + 1
-        barrel.quantity = barrel.quantity - 1
+            barrels_to_purchase[check]["quantity"] += 1
+        barrel.quantity -= 1
         return True
-    
     return False
 
-
 def check_purchase_plan(sku: str, purchase_plan):
-    for i in range(0, len(purchase_plan)):
-        if sku == purchase_plan[i]["sku"]:
+    for i, plan in enumerate(purchase_plan):
+        if plan['sku'] == sku:
             return i
-        
     return -1
