@@ -32,8 +32,10 @@ def reset():
                 # set carts / cart items to nonactive for this run, but still save results
                 connection.execute(sqlalchemy.text("UPDATE carts SET current_shop = False;"))
                 connection.execute(sqlalchemy.text("UPDATE cart_items SET current_shop = False;"))
+                connection.execute(sqlalchemy.text("DELETE FROM gold_ledger;"))
+                connection.execute(sqlalchemy.text("DELETE FROM ml_ledger;"))
+                connection.execute(sqlalchemy.text("DELETE FROM potion_ledger;"))
 
 
-                 
     return "OK"
 

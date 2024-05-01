@@ -4,6 +4,7 @@ from src.api import auth
 from enum import Enum
 import sqlalchemy
 from src import database as db
+import json
 
 router = APIRouter(
     prefix="/carts",
@@ -121,32 +122,55 @@ class CartCheckout(BaseModel):
 
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
-    """ """
+    """ Process checkout, updating financial and inventory records using ledgers """
     gold_spent = 0
     potions_bought = 0
     with db.engine.begin() as connection:
-        cart_contents = connection.execute(sqlalchemy.text("SELECT quantity, item_sku  FROM cart_items WHERE cart_id = :cart_id"), {"cart_id": cart_id}).fetchall()
+        # Fetch all items in the cart
+        cart_contents = connection.execute(sqlalchemy.text(
+            "SELECT quantity, item_sku FROM cart_items WHERE cart_id = :cart_id"), 
+            {"cart_id": cart_id}).fetchall()
+
         for item in cart_contents:
             quantity, item_sku = item
-            price, stock =  connection.execute(sqlalchemy.text("SELECT price, quantity FROM potion_inventory WHERE sku = :item_sku"), {"item_sku": item_sku }).first()
+            # Retrieve price and stock from the potion inventory
+            potion_data = connection.execute(sqlalchemy.text(
+                "SELECT id, price, quantity FROM potion_inventory WHERE sku = :item_sku"), 
+                {"item_sku": item_sku}).first()
 
-            if quantity <= stock:
+            if potion_data and quantity <= potion_data.quantity:
+                potion_id, price, stock = potion_data
+                total_cost = quantity * price
                 potions_bought += quantity
-                gold_spent += (quantity * price)
-                connection.execute(sqlalchemy.text (
-                        """
-                        UPDATE potion_inventory
-                        SET quantity = potion_inventory.quantity - :quantity
-                        WHERE potion_inventory.sku = :sku
-                        """
-                    ), {"quantity": quantity, "sku": item_sku})
-                connection.execute(sqlalchemy.text (
-                        """
-                        UPDATE global_inventory
-                        SET gold = global_inventory.gold + :gold
-                        """
-                    ), {"gold": (quantity * price)})
+                gold_spent += total_cost
+
+                # Record potion transaction in potion_ledger
+                connection.execute(sqlalchemy.text(
+                    """
+                    INSERT INTO potion_ledger (potion_id, quantity, function, transaction, cost)
+                    VALUES (:potion_id, :quantity, 'sale', :transaction, :cost);
+                    """),
+                    {
+                        "potion_id": potion_id,
+                        "quantity": -quantity,  # Negative because it's a sale
+                        "function": "checkout",
+                        "transaction": json.dumps({"cart_id": cart_id, "item_sku": item_sku}),
+                        "cost": total_cost
+                    }
+                )
+
+                # Update the gold ledger for tracking money spent
+                connection.execute(sqlalchemy.text(
+                    """
+                    INSERT INTO gold_ledger (net_change, function, transaction)
+                    VALUES (:net_change, 'checkout', :transaction);
+                    """),
+                    {
+                        'net_change': -total_cost,  # Negative because it is an expenditure
+                        'transaction': json.dumps({"cart_id": cart_id, "item_sku": item_sku, "quantity": quantity})
+                    }
+                )
             else:
-                quantity = 0
+                quantity = 0  # Reset quantity if not enough stock
 
     return {"potions_bought": potions_bought, "total_gold_paid": gold_spent}

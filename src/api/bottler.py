@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
+import json
 
 router = APIRouter(
     prefix="/bottler",
@@ -15,124 +16,67 @@ class PotionInventory(BaseModel):
     potion_type: list[int]
     quantity: int
 
-# dictionary do index into my potion names
-potions_library = {
-    (100, 0, 0, 0): "red potion",
-    (0, 100, 0, 0): "green potion",
-    (0, 0, 100, 0): "blue potion",
-    (0, 0, 0, 100): "black potion",
-    (50, 0, 50, 0): "purple potion",
-    (50, 50, 0, 0): "yellow potion",
-    (33, 34, 33, 0): "white potion"
-}
 @router.post("/deliver/{order_id}")
 def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int):
-    """ """
     print(f"potions delivered: {potions_delivered} order_id: {order_id}")
 
-    red_used = 0
-    green_used = 0
-    blue_used = 0
-    dark_used = 0
+    ml_changes = {'red': 0, 'green': 0, 'blue': 0, 'dark': 0}
+    total_cost = 0
 
     with db.engine.begin() as connection:
-    # determine amount of ml for each type used by the potions delivered
         for potion in potions_delivered:
-            name = potions_library[tuple(potion.potion_type)]
-            sku = name.upper()
-            sku = sku.replace(" ", "_")
-            sku += "_0"
-            quantity = potion.quantity
-            potion_sku = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE sku = :sku LIMIT 1;"), {'sku': sku}).fetchone()
-            if not potion_sku:
-                # insert
-                price = 50
-                connection.execute(sqlalchemy.text("INSERT INTO potion_inventory (sku, red_ml, green_ml, blue_ml, dark_ml, quantity, name, price) VALUES (:sku, :red_ml, :green_ml, :blue_ml, :dark_ml, :quantity, :name, :price);"), 
-                                {'sku': sku,
-                                    'red_ml': potion.potion_type[0],
-                                    'green_ml': potion.potion_type[1],
-                                    'blue_ml': potion.potion_type[2],
-                                    'dark_ml': potion.potion_type[3],
-                                    'quantity': quantity,
-                                    'name': name,
-                                    'price': price
-                                    })
-                print("inserting potion type: " + str(type))
-            else:
-                # Fetch current quantity from the database first
-                current_quantity = potion_sku.quantity  # Assuming quantity is fetched correctly from the DB
-                new_quantity = current_quantity + quantity  # Add the newly delivered quantity to the existing one
+            potion_type_info = connection.execute(sqlalchemy.text("""
+                SELECT id, sku, price FROM potion_inventory
+                WHERE red_ml = :red AND green_ml = :green AND blue_ml = :blue AND dark_ml = :dark LIMIT 1;
+                """), {
+                'red': potion.potion_type[0],
+                'green': potion.potion_type[1],
+                'blue': potion.potion_type[2],
+                'dark': potion.potion_type[3]
+            }).mappings().first()
 
-                # Update the database with the new total quantity
+            if potion_type_info:
+                potion_id = potion_type_info['id']
+                sku = potion_type_info['sku']
+                price_per_unit = potion_type_info['price']
+                transaction_cost = potion.quantity * price_per_unit
+                total_cost += transaction_cost
+
+                # Record transaction in potion_ledger
                 connection.execute(sqlalchemy.text("""
-                                                    UPDATE potion_inventory
-                                                    SET quantity = :new_quantity
-                                                    WHERE sku = :sku;
-                                                    """),
-                                                    {'new_quantity': new_quantity, 
-                                                    'sku': sku})
-            red_used += potion.potion_type[0] * quantity
-            green_used += potion.potion_type[1] * quantity
-            blue_used += potion.potion_type[2] * quantity
-            dark_used += potion.potion_type[3] * quantity
+                    INSERT INTO potion_ledger (potion_id, quantity, transaction, cost, function)
+                    VALUES (:potion_id, :quantity, 'delivery', :cost, :function);
+                    """), {
+                    'potion_id': potion_id,
+                    'quantity': potion.quantity,
+                    'cost': transaction_cost,
+                    'transaction': json.dumps({'order_id': order_id, 'ml_per_type': potion.potion_type}),
+                    'function': "post_deliver_bottles"
+                })
 
-        red_ml, green_ml, blue_ml, dark_ml = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory")).one()
+                # Aggregate ml changes for each color
+                ml_changes['red'] -= potion.potion_type[0] * potion.quantity
+                ml_changes['green'] -= potion.potion_type[1] * potion.quantity
+                ml_changes['blue'] -= potion.potion_type[2] * potion.quantity
+                ml_changes['dark'] -= potion.potion_type[3] * potion.quantity
+            else:
+                print(f"Error: Potion with components {potion.potion_type} not found in inventory.")
 
-        red_ml -= red_used
-        green_ml -= green_used
-        blue_ml -= blue_used
-        dark_ml -= dark_used
-
-        connection.execute(sqlalchemy.text("""
-                                UPDATE global_inventory
-                                SET num_green_ml = :green, num_red_ml = :red, num_blue_ml = :blue, num_dark_ml = :dark
-                                WHERE id = 1;
-                                """),
-                                {'green': green_ml, 'red': red_ml, 'blue': blue_ml, 'dark': dark_ml})
-            
+        # Record aggregated volume changes in ml_ledger for each potion type
+        for color, change in ml_changes.items():
+            if change < 0:
+                connection.execute(sqlalchemy.text("""
+                    INSERT INTO ml_ledger (barrel_type, net_change, transaction, function)
+                    VALUES (:barrel_type, :net_change, 'delivery', :function);
+                    """), {
+                    'barrel_type': color,
+                    'net_change': change,
+                    'transaction': json.dumps({'order_id': order_id}),
+                    'function': "post_deliver_bottles"
+                })    
     return "OK"
 
 
-    # num_req_red = 0
-    # num_req_green = 0
-    # num_req_blue = 0
-    # num_req_dark = 0
-    # for i in potions_delivered:
-    #     if i.potion_type == [100, 0, 0, 0]:
-    #         num_req_red += i.quantity
-    #     elif i.potion_type == [0, 100, 0, 0]:
-    #         num_req_green += i.quantity
-    #     elif i.potion_type == [0, 0, 100, 0]:
-    #         num_req_blue += i.quantity
-    #     elif i.potion_type == [0, 0, 0, 100]:
-    #         num_req_dark += i.quantity
-
-    # with db.engine.begin() as connection:
-    #     globe = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory")).one()
-    #     id = globe.id
-    #     num_red_potions = globe.num_red_potions
-    #     num_green_potions = globe.num_green_potions
-    #     num_blue_potions = globe.num_blue_potions
-    #     num_dark_potions = globe.num_dark_potions
-
-    #     num_red_ml = globe.num_red_ml
-    #     num_green_ml = globe.num_green_ml
-    #     num_blue_ml = globe.num_blue_ml
-    #     num_dark_ml = globe.num_dark_ml
-
-    #     ml_req_red = num_req_red * 100
-    #     ml_req_green = num_req_green * 100
-    #     ml_req_blue = num_req_blue * 100
-    #     ml_req_dark = num_req_dark * 100
-
-    #     connection.execute(sqlalchemy.text("""
-    #                                 UPDATE global_inventory
-    #                                 SET num_red_ml = :ml_red, num_red_potions = :pot_red, num_green_ml = :ml_green, num_green_potions = :pot_green, num_blue_ml = :ml_blue, num_blue_potions = :pot_blue, num_dark_ml = :ml_dark, num_dark_potions = :pot_dark
-    #                                 WHERE id = :id;
-    #                                 """),
-    #                                 {'ml_red': num_red_ml - ml_req_red, 'pot_red': num_red_potions + num_req_red, 'ml_green': num_green_ml - ml_req_green, 'pot_green': num_green_potions + num_req_green, 'ml_blue': num_blue_ml - ml_req_blue, 'pot_blue': num_blue_potions + num_req_blue, 'ml_dark': num_dark_ml - ml_req_dark, 'pot_dark': num_dark_potions + num_req_dark,'id': id})
-
-    # return "OK"
 
 
 @router.post("/plan")

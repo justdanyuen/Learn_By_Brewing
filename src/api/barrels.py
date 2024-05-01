@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
+import json
 
 router = APIRouter(
     prefix="/barrels",
@@ -19,73 +20,91 @@ class Barrel(BaseModel):
 
     quantity: int
 
+# Assuming you've defined a method in Barrel class to convert it to a dictionary
+def barrel_to_dict(barrel):
+    return {
+        "sku": barrel.sku,
+        "ml_per_barrel": barrel.ml_per_barrel,
+        "potion_type": barrel.potion_type,
+        "price": barrel.price,
+        "quantity": barrel.quantity
+    }
+
+
+def filter_and_format_barrels(barrels, potion_type):
+    filtered_barrels = [
+        {
+            'quantity': barrel.quantity,
+            'ml_per_barrel': barrel.ml_per_barrel,
+            'price': barrel.price
+        }
+        for barrel in barrels if barrel.potion_type == potion_type
+    ]
+    return json.dumps(filtered_barrels)
+
+
 @router.post("/deliver/{order_id}")
 def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
-    print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
+
+    barrels_json = json.dumps([barrel_to_dict(barrel) for barrel in barrels_delivered])
+
+    potion_data = {
+        "red": [0, [], []],  # new_ml, potion_type, barrels_json
+        "green": [0, [], []],
+        "blue": [0, [], []],
+        "dark": [0, [], []]
+    }
+    cost = 0
+
+    for item in barrels_delivered:
+        quantity = item.quantity
+        ml_per_barrel = item.ml_per_barrel
+        price = item.price
+        potion_type_key = "unknown"  # Default case
+
+        if item.potion_type == [1, 0, 0, 0]:
+            potion_type_key = "red"
+        elif item.potion_type == [0, 1, 0, 0]:
+            potion_type_key = "green"
+        elif item.potion_type == [0, 0, 1, 0]:
+            potion_type_key = "blue"
+        elif item.potion_type == [0, 0, 0, 1]:
+            potion_type_key = "dark"
+
+        if potion_type_key != "unknown":
+            potion_data[potion_type_key][0] += quantity * ml_per_barrel
+            potion_data[potion_type_key][1] = item.potion_type
+            potion_data[potion_type_key][2].append(barrel_to_dict(item))
+        cost -= price * quantity
 
     with db.engine.begin() as connection:
-        globe = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory")).one()
-        gold = globe.gold
-        num_red_ml = globe.num_red_ml
-        num_green_ml = globe.num_green_ml
-        num_blue_ml = globe.num_blue_ml
-        num_dark_ml = globe.num_dark_ml
-        new_red = 0
-        new_green = 0
-        new_blue = 0
-        new_dark = 0
-        cost = 0
+        try:
+            connection.execute(sqlalchemy.text("""
+                INSERT INTO gold_ledger (net_change, function, transaction)
+                VALUES (:cost, :function, :transaction);
+            """), {'cost': cost, 'function': "post_deliver_barrels", 'transaction': barrels_json})
 
+            # insert the ml ledger change selectively for each type of potion
+            insert_ml_ledger = sqlalchemy.text("""
+                INSERT INTO ml_ledger (net_change, barrel_type, function, transaction)
+                VALUES (:ml_in_barrel, :barrel_type, :function, :transaction);
+            """)
 
-        for item in barrels_delivered:
-            quantity = item.quantity
-            ml_per_barrel = item.ml_per_barrel
-            price = item.price
-
-            if item.potion_type == [1, 0, 0, 0]: #red
-                new_red += quantity * ml_per_barrel
-
-            elif item.potion_type == [0, 1, 0, 0]: #green
-                new_green += quantity * ml_per_barrel
-
-            elif item.potion_type == [0, 0, 1, 0]: #green
-                new_blue += quantity * ml_per_barrel
-
-            elif item.potion_type == [0, 0, 0, 1]: #green
-                new_dark += quantity * ml_per_barrel
-
-            else:
-                print("potion delivered wasn't red, green, blue, or dark?.....") #error case
-            cost += price * quantity
-        
-        # Define the SQL update statement using sqlalchemy.text for prepared statements
-        update_statement = sqlalchemy.text("""
-            UPDATE global_inventory 
-            SET num_red_ml = :new_red, 
-                num_green_ml = :new_green, 
-                num_blue_ml = :new_blue, 
-                num_dark_ml = :new_dark, 
-                gold = :new_gold 
-            WHERE id = :id;
-        """)
-
-        # Execute the update within a transaction using context management
-        with db.engine.begin() as connection:
-            result = connection.execute(update_statement, {
-                'new_red': new_red + num_red_ml,  # Assuming you want to add the new amount to the existing
-                'new_green': new_green + num_green_ml, 
-                'new_blue': new_blue + num_blue_ml, 
-                'new_dark': new_dark + num_dark_ml, 
-                'new_gold': gold - cost,  # Assuming cost is deducted from the existing gold
-                'id': 1  # Assuming the ID is static as per your example
-            })
-
-        # Output the results of the operation
-        print(f"DELIVERY - gold paid: {cost}, red_ml: {new_red}, green_ml: {new_green}, blue_ml: {new_blue}, dark_ml: {new_dark}")
+            for data in potion_data.values():
+                new_ml, potion_type, barrels_info = data
+                if new_ml > 0:
+                    connection.execute(insert_ml_ledger, {
+                        'ml_in_barrel': new_ml,
+                        'barrel_type': potion_type,
+                        'function': "post_deliver_barrels",
+                        'transaction': json.dumps(barrels_info)
+                    })
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            connection.rollback()  # Rollback in case of any error
 
     return "OK"
-
 
 
 #def calculate_barrel_to_purchase(catalog, max_to_spend, potion_type, ml_available)
