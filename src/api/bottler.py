@@ -94,7 +94,7 @@ def get_bottle_plan():
             if color in ml_totals:
                 ml_totals[color] += entry['net_change']
 
-        print(f"{ml_totals}\n\n")
+        # print(f"{ml_totals}\n\n")
 
         # Fetch potion inventory without relying on quantity column
         potion_inventory = connection.execute(sqlalchemy.text(
@@ -107,7 +107,7 @@ def get_bottle_plan():
             "SELECT potion_id, SUM(quantity) AS total_quantity FROM potion_ledger GROUP BY potion_id;"
         )).mappings().all()
 
-        print(f"{potion_ledger_entries}\n\n")
+        print(f"Potion Ledger Entries: {potion_ledger_entries}\n\n")
 
         for entry in potion_ledger_entries:
             potion_quantities[entry['potion_id']] = entry['total_quantity']
@@ -118,14 +118,14 @@ def get_bottle_plan():
     return bottle_plan
 
 def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_quantities):
-    print(f"red_ml: {red_ml} green_ml: {green_ml} blue_ml: {blue_ml} dark_ml: {dark_ml}")
+    # print(f"red_ml: {red_ml} green_ml: {green_ml} blue_ml: {blue_ml} dark_ml: {dark_ml}")
     for recipe in potion_inventory:
         current_quantity = potion_quantities.get(recipe['id'], 0)  # Default to 0 if no entry exists
         print(f"id: {recipe['id']} sku: {recipe['sku']} name: {recipe['name']} r: {recipe['red_ml']} g: {recipe['green_ml']} b: {recipe['blue_ml']} d: {recipe['dark_ml']} quantity: {current_quantity} price: {recipe['price']}")
 
     bottle_plan = []
     total_ml = red_ml + green_ml + blue_ml + dark_ml
-    print(f"total ml: {total_ml}")
+    # print(f"total ml: {total_ml}")
 
     for recipe in potion_inventory:
         current_quantity = potion_quantities.get(recipe['id'], 0)
@@ -145,7 +145,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                     "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
                     "quantity": quantity
                 })
-    print(bottle_plan)
+    print("Bottle Plan:", bottle_plan, "\n\n")
     return bottle_plan
 
 if __name__ == "__main__":
