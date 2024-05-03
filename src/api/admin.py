@@ -24,6 +24,7 @@ def reset():
         connection.execute(sqlalchemy.text("DELETE FROM gold_ledger;"))
         connection.execute(sqlalchemy.text("DELETE FROM ml_ledger;"))
         connection.execute(sqlalchemy.text("DELETE FROM potion_ledger;"))
+        connection.execute(sqlalchemy.text("DELETE FROM time_table;"))
 
         # Reset the ID sequences for all tables with auto-incremented IDs
         connection.execute(sqlalchemy.text("ALTER SEQUENCE carts_id_seq RESTART WITH 1;"))
@@ -31,11 +32,22 @@ def reset():
         connection.execute(sqlalchemy.text("ALTER SEQUENCE gold_ledger_id_seq RESTART WITH 1;"))
         connection.execute(sqlalchemy.text("ALTER SEQUENCE ml_ledger_id_seq RESTART WITH 1;"))
         connection.execute(sqlalchemy.text("ALTER SEQUENCE potion_ledger_id_seq RESTART WITH 1;"))
+        connection.execute(sqlalchemy.text("ALTER SEQUENCE time_table_id_seq RESTART WITH 1;"))
+
 
         # Reinitialize the gold to 100
         connection.execute(sqlalchemy.text("""
             INSERT INTO gold_ledger (net_change, function, transaction)
             VALUES (100, 'reset', 'Initial gold set to 100 upon reset');
+            """))
+        
+        connection.execute(sqlalchemy.text("""
+            INSERT INTO capacity_ledger (change, type, description)
+            VALUES (50, 'potion', 'initial potion capacity')
+            """))
+        connection.execute(sqlalchemy.text("""
+            INSERT INTO capacity_ledger (change, type, description)
+            VALUES (10000, 'ml', 'initial ml capacity')
             """))
 
     print("Game state has been reset. All ledgers cleared and gold set to 100.")

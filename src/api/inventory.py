@@ -11,9 +11,38 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+def create_views():
+    with db.engine.begin() as connection:
+        # Create or replace view for ml_ledger totals
+        connection.execute(sqlalchemy.text("""
+            CREATE OR REPLACE VIEW ml_totals_view AS
+            SELECT barrel_type, SUM(net_change) AS total_ml
+            FROM ml_ledger
+            GROUP BY barrel_type
+        """))
+
+        # Create or replace view for the total gold change
+        connection.execute(sqlalchemy.text("""
+            CREATE OR REPLACE VIEW total_gold_view AS
+            SELECT SUM(net_change) AS total_gold
+            FROM gold_ledger
+        """))
+
+        # Create or replace view for the total number of potions, now including potion_id
+        connection.execute(sqlalchemy.text("""
+            CREATE OR REPLACE VIEW potion_view AS
+            SELECT potion_id, SUM(quantity) AS total_potions
+            FROM potion_ledger
+            GROUP BY potion_id
+        """))
+
+# You might call this function to ensure all views are created or updated
+create_views()
+
 @router.get("/audit")
 def get_inventory():
     """ Computes inventory and financial state from ledger tables. """
+    create_views()  # Ensure views are created or updated
     with db.engine.begin() as connection:
         # Aggregate changes in ml_ledger for each barrel type
         ml_totals = connection.execute(sqlalchemy.text("""

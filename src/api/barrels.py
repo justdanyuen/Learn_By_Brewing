@@ -117,13 +117,22 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ Determine the optimal barrels to purchase based on current ml and gold statuses in ledgers. """
+
+    print("Wholesale Catalog:")
+    for barrel in wholesale_catalog:
+        print(f"SKU: {barrel.sku}, ML per Barrel: {barrel.ml_per_barrel}, "
+              f"Potion Type: {barrel.potion_type}, Price: {barrel.price}, Quantity: {barrel.quantity}")
+        
+    print("\n\n")
+
+
     barrels_to_purchase = []
 
     with db.engine.begin() as connection:
         # Retrieve current ml amounts and total gold from ledgers
         ml_totals = connection.execute(sqlalchemy.text(
             """
-            SELECT barrel_type, SUM(net_change) AS total_ml
+            SELECT barrel_type, COALESCE(SUM(net_change), 0) AS total_ml
             FROM ml_ledger
             GROUP BY barrel_type
             """
@@ -162,6 +171,32 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         # Sort each type by cost-effectiveness
         for color in potion_type_catalogs:
             potion_type_catalogs[color].sort(key=lambda x: x.price / x.ml_per_barrel)
+            print(f"Sorted {color.capitalize()} Offers:", potion_type_catalogs[color])
+
+        if potion_type_catalogs['dark']:
+            for barrel in potion_type_catalogs['dark']:
+                if gold_total >= barrel.price:
+                    if try_purchase_barrels(gold_total, barrel, barrels_to_purchase):
+                        gold_total -= barrel.price
+                        ml_counts['dark'] += barrel.ml_per_barrel
+                        print(f"Purchased {barrel.sku} for {barrel.price} gold.")
+                        break  # Break after purchasing one barrel
+
+            # Execute query and fetch the first result
+            current_time_result = connection.execute(sqlalchemy.text("""
+                SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+            """)).first()  # Use first() to fetch the first result directly
+
+            if current_time_result:  # Check if a result was returned
+                day = current_time_result.day  # Access columns directly via the result
+                hour = current_time_result.hour
+
+                # Execute the insertion with the fetched day and hour
+                connection.execute(sqlalchemy.text("""
+                    INSERT INTO dark_order_tracker (day, hour)
+                    VALUES (:day, :hour);
+                """), {'day': day, 'hour': hour})
+
 
         # Purchase decision logic
         while any(ml_counts[color] < 200 for color in ml_counts) and gold_total > 0:
