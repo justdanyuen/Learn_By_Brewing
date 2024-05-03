@@ -183,13 +183,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                         break  # Break after purchasing one barrel
 
             # Execute query and fetch the first result
-            current_time_result = connection.execute(sqlalchemy.text("""
+            current_time = connection.execute(sqlalchemy.text("""
                 SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
             """)).first()  # Use first() to fetch the first result directly
 
-            if current_time_result:  # Check if a result was returned
-                day = current_time_result.day  # Access columns directly via the result
-                hour = current_time_result.hour
+            if current_time:  # Check if a result was returned
+                day = current_time.day  # Access columns directly via the result
+                hour = current_time.hour
 
                 # Execute the insertion with the fetched day and hour
                 connection.execute(sqlalchemy.text("""

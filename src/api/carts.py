@@ -112,7 +112,18 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
     with db.engine.begin() as connection:
         potion_id = connection.execute(sqlalchemy.text("SELECT id FROM potion_inventory WHERE sku = :sku"), {"sku": item_sku}).scalar_one()
-        connection.execute(sqlalchemy.text("INSERT INTO cart_items (item_sku, quantity, cart_id, potion_id) VALUES (:sku , :quantity, :cart_id, :potion_id)"), {"sku": item_sku, "quantity": cart_item.quantity, "cart_id": cart_id, "potion_id": potion_id})
+        current_time = connection.execute(sqlalchemy.text("""
+                SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+            """)).first()  # Use first() to fetch the first result directly
+
+        if current_time:  # Check if a result was returned
+            day = current_time.day  # Access columns directly via the result
+            hour = current_time.hour
+            connection.execute(sqlalchemy.text("INSERT INTO cart_items (item_sku, quantity, cart_id, potion_id, day, hour) VALUES (:sku , :quantity, :cart_id, :potion_id, :day, :hour)"), {"sku": item_sku, "quantity": cart_item.quantity, "cart_id": cart_id, "potion_id": potion_id, "day": day, "hour": hour})
+        else:
+            print("error retrieving the time...\n")
+            connection.execute(sqlalchemy.text("INSERT INTO cart_items (item_sku, quantity, cart_id, potion_id) VALUES (:sku , :quantity, :cart_id, :potion_id)"), {"sku": item_sku, "quantity": cart_item.quantity, "cart_id": cart_id, "potion_id": potion_id})
+
 
     return "OK"
 
