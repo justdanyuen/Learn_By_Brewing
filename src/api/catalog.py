@@ -43,5 +43,8 @@ def get_catalog():
                 "potion_type": potion_type,
             })
 
+    catalog = catalog[:6]
+
+
     print(catalog)
     return catalog
