@@ -82,6 +82,15 @@ def get_bottle_plan():
     Dynamically computes the plan to bottle potions from barrels based on the transaction records in ml_ledger and potion_ledger.
     """
     with db.engine.begin() as connection:
+
+        # Calculate total number of potions already bottled
+        total_existing_potions = connection.execute(sqlalchemy.text(
+            "SELECT COALESCE(SUM(quantity), 0) AS total_potions FROM potion_ledger;"
+        )).scalar()
+
+        # Determine the maximum number of potions that can be added
+        max_potions_to_bottle = max(0, 50 - total_existing_potions)
+
         # Retrieve all records from ml_ledger
         ml_ledger_entries = connection.execute(sqlalchemy.text(
             "SELECT barrel_type, net_change FROM ml_ledger;"
@@ -113,11 +122,11 @@ def get_bottle_plan():
             potion_quantities[entry['potion_id']] = entry['total_quantity']
 
         # Calculate how many potions can be made from the current ml totals
-        bottle_plan = make_potions(ml_totals['red'], ml_totals['green'], ml_totals['blue'], ml_totals['dark'], potion_inventory, potion_quantities)
+        bottle_plan = make_potions(ml_totals['red'], ml_totals['green'], ml_totals['blue'], ml_totals['dark'], potion_inventory, potion_quantities,max_potions_to_bottle)
 
     return bottle_plan
 
-def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_quantities):
+def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_quantities,max_potions):
     # print(f"red_ml: {red_ml} green_ml: {green_ml} blue_ml: {blue_ml} dark_ml: {dark_ml}")
     for recipe in potion_inventory:
         current_quantity = potion_quantities.get(recipe['id'], 0)  # Default to 0 if no entry exists
@@ -125,16 +134,18 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
     bottle_plan = []
     total_ml = red_ml + green_ml + blue_ml + dark_ml
+    total_potions = 0  # Track the total number of potions created
     # print(f"total ml: {total_ml}")
 
     for recipe in potion_inventory:
         current_quantity = potion_quantities.get(recipe['id'], 0)
-        if current_quantity >= 7:
-            continue  # Skip to the next recipe if there is at least one potion
+        if current_quantity >= 7 or total_potions >= max_potions:
+            continue  # Skip to the next recipe if there are 7 potions of that type in stock
         if total_ml > 100:
             quantity = 0
             while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
-                   blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and quantity < 5):
+                   blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and 
+                   quantity + total_potions < max_potions and quantity < 5):
                 quantity += 1
                 red_ml -= recipe['red_ml']
                 green_ml -= recipe['green_ml']
@@ -145,6 +156,8 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                     "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
                     "quantity": quantity
                 })
+                total_potions += quantity
+
     print("Bottle Plan:", bottle_plan, "\n\n")
     return bottle_plan
 
