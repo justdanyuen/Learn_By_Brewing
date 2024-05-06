@@ -25,6 +25,7 @@ def reset():
         connection.execute(sqlalchemy.text("DELETE FROM ml_ledger;"))
         connection.execute(sqlalchemy.text("DELETE FROM potion_ledger;"))
         connection.execute(sqlalchemy.text("DELETE FROM time_table;"))
+        connection.execute(sqlalchemy.text("DELETE FROM capacity_ledger;"))
 
         # Reset the ID sequences for all tables with auto-incremented IDs
         connection.execute(sqlalchemy.text("ALTER SEQUENCE carts_id_seq RESTART WITH 1;"))
@@ -33,7 +34,6 @@ def reset():
         connection.execute(sqlalchemy.text("ALTER SEQUENCE ml_ledger_id_seq RESTART WITH 1;"))
         connection.execute(sqlalchemy.text("ALTER SEQUENCE potion_ledger_id_seq RESTART WITH 1;"))
         connection.execute(sqlalchemy.text("ALTER SEQUENCE time_table_id_seq RESTART WITH 1;"))
-        connection.execute(sqlalchemy.text("ALTER SEQUENCE capacity_ledger RESTART WITH 1;"))
 
 
 
