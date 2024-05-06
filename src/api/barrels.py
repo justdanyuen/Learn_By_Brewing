@@ -200,9 +200,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 """), {'day': day, 'hour': hour})
 
 
-        # Purchase decision logic - Prioritize dark barrels first
+        # Purchase decision logic - Prioritize larger barrels first
         for color in ['dark', 'red', 'green', 'blue']:
             catalog = potion_type_catalogs[color]
+            
+            # Sort the catalog by ml_per_barrel in descending order
+            catalog.sort(key=lambda x: x.ml_per_barrel, reverse=True)
+            
             for barrel in catalog:
                 if ml_counts[color] >= 500:
                     continue #if I have 500ml, for now that's good 
@@ -210,7 +214,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 if gold_total < barrel.price:
                     continue
 
-                quantity = min(barrel.quantity, (ml_capacity - total_ml) // barrel.ml_per_barrel)
+                quantity = min(barrel.quantity, (gold_total // barrel.price), (ml_capacity - total_ml) // barrel.ml_per_barrel)
 
                 if quantity == 0:
                     continue
@@ -222,8 +226,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 else:
                     print(f"Not enough gold, has {gold_total} but requires {barrel.price * quantity}")
 
-        print(f"Barrels to purchase: {barrels_to_purchase}")
-    return barrels_to_purchase             
+                print(f"Barrels to purchase: {barrels_to_purchase}")   
+    return barrels_to_purchase  
 
 def try_purchase_barrels(gold, barrel, barrels_to_purchase, quantity):
     """
