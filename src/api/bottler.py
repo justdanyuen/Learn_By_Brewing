@@ -88,8 +88,12 @@ def get_bottle_plan():
             "SELECT COALESCE(SUM(quantity), 0) AS total_potions FROM potion_ledger;"
         )).scalar()
 
+        ml_capacity = connection.execute(sqlalchemy.text(
+            "SELECT ml_capacity FROM capacity_ledger LIMIT 1"
+        )).scalar()
+
         # Determine the maximum number of potions that can be added
-        max_potions_to_bottle = max(0, 50 - total_existing_potions)
+        max_potions_to_bottle = max(0, ml_capacity - total_existing_potions)
 
         # Retrieve all records from ml_ledger
         ml_ledger_entries = connection.execute(sqlalchemy.text(
