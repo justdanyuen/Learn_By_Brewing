@@ -215,16 +215,26 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 if quantity == 0:
                     continue
 
-                if try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity):
-                    gold_total -= barrel.price * quantity
+                success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
+                if success:
                     ml_counts[color] += barrel.ml_per_barrel * quantity
                     total_ml += barrel.ml_per_barrel * quantity
+                else:
+                    print(f"Not enough gold, has {gold_total} but requires {barrel.price * quantity}")
 
         print(f"Barrels to purchase: {barrels_to_purchase}")
     return barrels_to_purchase             
 
 def try_purchase_barrels(gold, barrel, barrels_to_purchase, quantity):
-    if barrel.price <= gold and barrel.quantity >= quantity:
+    """
+    Try to purchase the given barrel.
+
+    Returns:
+        success (bool): Whether the purchase was successful.
+        remaining_gold (int): The remaining amount of gold after the purchase.
+    """
+    cost = barrel.price * quantity
+    if cost <= gold and barrel.quantity >= quantity:
         check = check_purchase_plan(barrel.sku, barrels_to_purchase)
         if check == -1:
             barrels_to_purchase.append({
@@ -237,8 +247,8 @@ def try_purchase_barrels(gold, barrel, barrels_to_purchase, quantity):
         else:
             barrels_to_purchase[check]["quantity"] += quantity
         barrel.quantity -= quantity
-        return True
-    return False
+        return True, gold - cost
+    return False, gold
 
 def check_purchase_plan(sku: str, purchase_plan):
     for i, plan in enumerate(purchase_plan):
