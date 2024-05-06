@@ -138,18 +138,27 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             """
         )).mappings().all()
 
-        gold_total = connection.execute(sqlalchemy.text(
-            "SELECT SUM(net_change) FROM gold_ledger"
-        )).scalar() or 0
-
         # Initialize ml counts from the fetched data
         ml_counts = {'red': 0, 'green': 0, 'blue': 0, 'dark': 0}
         for ml in ml_totals:
             if ml['barrel_type'] in ml_counts:
                 ml_counts[ml['barrel_type']] = ml['total_ml']
 
-        print(f"Current ml values - {ml_counts}")
-        print(f"Current gold: {gold_total}")
+        total_ml = sum(ml_counts.values())
+
+        gold_total = connection.execute(sqlalchemy.text(
+            "SELECT SUM(net_change) FROM gold_ledger"
+        )).scalar()
+
+        ml_capacity = connection.execute(sqlalchemy.text(
+            "SELECT ml_capacity FROM capacity_ledger LIMIT 1"
+        )).scalar()
+
+
+        print(f"Current ml Values - {ml_counts}")
+        print(f"Current Gold: {gold_total}")
+        print(f"Current ml Capacity: {ml_capacity}")
+
 
         # Split the catalog into potion types
         potion_type_catalogs = {
@@ -174,13 +183,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             print(f"Sorted {color.capitalize()} Offers:", potion_type_catalogs[color])
 
         if potion_type_catalogs['dark']:
-            for barrel in potion_type_catalogs['dark']:
-                if gold_total >= barrel.price:
-                    if try_purchase_barrels(gold_total, barrel, barrels_to_purchase):
-                        gold_total -= barrel.price
-                        ml_counts['dark'] += barrel.ml_per_barrel
-                        print(f"Purchased {barrel.sku} for {barrel.price} gold.")
-                        break  # Break after purchasing one barrel
 
             # Execute query and fetch the first result
             current_time = connection.execute(sqlalchemy.text("""
@@ -198,37 +200,43 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 """), {'day': day, 'hour': hour})
 
 
-        # Purchase decision logic
-        while any(ml_counts[color] < 200 for color in ml_counts) and gold_total > 0:
-            updated = False
-            for color, catalog in potion_type_catalogs.items():
-                for barrel in catalog:
-                    if ml_counts[color] < 200 and gold_total >= barrel.price:
-                        if try_purchase_barrels(gold_total, barrel, barrels_to_purchase):
-                            gold_total -= barrel.price
-                            ml_counts[color] += barrel.ml_per_barrel
-                            updated = True
+        # Purchase decision logic - Prioritize dark barrels first
+        for color in ['dark', 'red', 'green', 'blue']:
+            catalog = potion_type_catalogs[color]
+            for barrel in catalog:
+                if ml_counts[color] >= 500:
+                    continue #if I have 500ml, for now that's good 
 
-            if not updated:
-                break
+                if gold_total < barrel.price:
+                    continue
+
+                quantity = min(barrel.quantity, (ml_capacity - total_ml) // barrel.ml_per_barrel)
+
+                if quantity == 0:
+                    continue
+
+                if try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity):
+                    gold_total -= barrel.price * quantity
+                    ml_counts[color] += barrel.ml_per_barrel * quantity
+                    total_ml += barrel.ml_per_barrel * quantity
 
         print(f"Barrels to purchase: {barrels_to_purchase}")
     return barrels_to_purchase             
 
-def try_purchase_barrels(gold, barrel, barrels_to_purchase):
-    if barrel.price <= gold and barrel.quantity > 0:
+def try_purchase_barrels(gold, barrel, barrels_to_purchase, quantity):
+    if barrel.price <= gold and barrel.quantity >= quantity:
         check = check_purchase_plan(barrel.sku, barrels_to_purchase)
         if check == -1:
             barrels_to_purchase.append({
                 "sku": barrel.sku,
-                "quantity": 1,
+                "quantity": quantity,
                 "ml_per_barrel": barrel.ml_per_barrel,
                 "potion_type": barrel.potion_type,
                 "price": barrel.price
             })
         else:
-            barrels_to_purchase[check]["quantity"] += 1
-        barrel.quantity -= 1
+            barrels_to_purchase[check]["quantity"] += quantity
+        barrel.quantity -= quantity
         return True
     return False
 
