@@ -160,13 +160,13 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
     for recipe in potion_inventory:
         current_quantity = potion_quantities.get(recipe['id'], 0)
-        if current_quantity >= 7 or total_potions >= max_potions:
-            continue  # Skip to the next recipe if there are 7 potions of that type in stock
+        # if current_quantity >= 7 or total_potions >= max_potions:
+        #     continue  # Skip to the next recipe if there are 7 potions of that type in stock
         if total_ml > 100:
             quantity = 0
             while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
                    blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and 
-                   quantity + total_potions < max_potions and quantity < 5):
+                   quantity + total_potions < max_potions):
                 quantity += 1
                 red_ml -= recipe['red_ml']
                 green_ml -= recipe['green_ml']
