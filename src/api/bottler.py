@@ -127,9 +127,9 @@ def get_bottle_plan():
         # print(f"{ml_totals}\n\n")
 
         # Fetch potion inventory without relying on quantity column
-        potion_inventory = connection.execute(sqlalchemy.text(
-            "SELECT id, sku, name, price, red_ml, green_ml, blue_ml, dark_ml FROM potion_inventory;"
-        )).mappings().all()
+        potion_inventory = connection.execute(
+            sqlalchemy.text("SELECT id, sku, name, price, red_ml, green_ml, blue_ml, dark_ml FROM potion_inventory ORDER BY id;")
+        ).mappings().all()
 
         # Calculate available quantities from potion_ledger
         potion_quantities = {}
