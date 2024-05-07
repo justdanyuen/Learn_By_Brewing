@@ -62,15 +62,32 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         # Record aggregated volume changes in ml_ledger for each potion type
         for color, change in ml_changes.items():
             if change < 0:
-                connection.execute(sqlalchemy.text("""
-                    INSERT INTO ml_ledger (barrel_type, net_change, transaction, function)
-                    VALUES (:barrel_type, :net_change, 'delivery', :function);
-                    """), {
-                    'barrel_type': color,
-                    'net_change': change,
-                    'transaction': json.dumps({'order_id': order_id}),
-                    'function': "post_deliver_bottles"
-                })    
+                current_time = connection.execute(sqlalchemy.text("""
+                            SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+                        """)).first()  # Use first() to fetch the first result directly
+
+                if current_time:  # Check if a result was returned
+                    connection.execute(sqlalchemy.text("""
+                        INSERT INTO ml_ledger (barrel_type, net_change, transaction, function, day, hour)
+                        VALUES (:barrel_type, :net_change, 'delivery', :function, :day, :hour);
+                        """), {
+                        'barrel_type': color,
+                        'net_change': change,
+                        'transaction': json.dumps({'order_id': order_id}),
+                        'function': "post_deliver_bottles",
+                        'day': current_time.day,
+                        'hour': current_time.hour
+                    })   
+                else:  
+                    connection.execute(sqlalchemy.text("""
+                        INSERT INTO ml_ledger (barrel_type, net_change, transaction, function)
+                        VALUES (:barrel_type, :net_change, 'delivery', :function);
+                        """), {
+                        'barrel_type': color,
+                        'net_change': change,
+                        'transaction': json.dumps({'order_id': order_id}),
+                        'function': "post_deliver_bottles"
+                    })    
     return "OK"
 
 
