@@ -89,14 +89,30 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
             # Insert changes into the ml_ledger
             for color, (ml_change, barrels_info) in potion_data.items():
                 if ml_change > 0:
-                    connection.execute(sqlalchemy.text("""
-                        INSERT INTO ml_ledger (net_change, barrel_type, function, transaction)
-                        VALUES (:ml_change, :barrel_type, 'deliver_barrels', :transaction);
-                    """), {
-                        'ml_change': ml_change,
-                        'barrel_type': color,
-                        'transaction': json.dumps(barrels_info)
-                    })
+                    current_time = connection.execute(sqlalchemy.text("""
+                            SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+                        """)).first()  # Use first() to fetch the first result directly
+
+                    if current_time:  # Check if a result was returned
+                        connection.execute(sqlalchemy.text("""
+                            INSERT INTO ml_ledger (net_change, barrel_type, function, transaction, day, hour)
+                            VALUES (:ml_change, :barrel_type, 'deliver_barrels', :transaction, :day, :hour);
+                        """), {
+                            'ml_change': ml_change,
+                            'barrel_type': color,
+                            'transaction': json.dumps(barrels_info),
+                            'day': current_time.day,
+                            'hour': current_time.hour
+                        })
+                    else:
+                        connection.execute(sqlalchemy.text("""
+                            INSERT INTO ml_ledger (net_change, barrel_type, function, transaction)
+                            VALUES (:ml_change, :barrel_type, 'deliver_barrels', :transaction);
+                        """), {
+                            'ml_change': ml_change,
+                            'barrel_type': color,
+                            'transaction': json.dumps(barrels_info)
+                        })
         except Exception as e:
             print(f"An error occurred: {e}")
             connection.rollback()
