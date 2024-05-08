@@ -105,12 +105,12 @@ def get_bottle_plan():
             "SELECT COALESCE(SUM(quantity), 0) AS total_potions FROM potion_ledger;"
         )).scalar()
 
-        ml_capacity = connection.execute(sqlalchemy.text(
-            "SELECT ml_capacity FROM capacity_ledger LIMIT 1"
+        potion_capacity = connection.execute(sqlalchemy.text(
+            "SELECT potion_capacity FROM capacity_ledger LIMIT 1"
         )).scalar()
 
         # Determine the maximum number of potions that can be added
-        max_potions_to_bottle = max(0, ml_capacity - total_existing_potions)
+        max_potions_to_bottle = max(0, potion_capacity - total_existing_potions)
 
         # Retrieve all records from ml_ledger
         ml_ledger_entries = connection.execute(sqlalchemy.text(
@@ -148,37 +148,38 @@ def get_bottle_plan():
     return bottle_plan
 
 def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_quantities,max_potions):
+    print(f"The max number of potions I can make is {max_potions}")
     # print(f"red_ml: {red_ml} green_ml: {green_ml} blue_ml: {blue_ml} dark_ml: {dark_ml}")
     for recipe in potion_inventory:
         current_quantity = potion_quantities.get(recipe['id'], 0)  # Default to 0 if no entry exists
         print(f"id: {recipe['id']} sku: {recipe['sku']} name: {recipe['name']} r: {recipe['red_ml']} g: {recipe['green_ml']} b: {recipe['blue_ml']} d: {recipe['dark_ml']} quantity: {current_quantity} price: {recipe['price']}")
 
     bottle_plan = []
-    total_ml = red_ml + green_ml + blue_ml + dark_ml
     total_potions = 0  # Track the total number of potions created
     # print(f"total ml: {total_ml}")
 
     for recipe in potion_inventory:
+        if total_potions >= max_potions:
+            break  # Stop processing if max potion limit is reached
+
         current_quantity = potion_quantities.get(recipe['id'], 0)
-        # if current_quantity >= 7 or total_potions >= max_potions:
-        #     continue  # Skip to the next recipe if there are 7 potions of that type in stock
-        if total_ml > 100:
-            quantity = 0
-            while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
-                   blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and 
-                   quantity + total_potions < max_potions):
-                
-                quantity += 1
-                red_ml -= recipe['red_ml']
-                green_ml -= recipe['green_ml']
-                blue_ml -= recipe['blue_ml']
-                dark_ml -= recipe['dark_ml']
-            if quantity > 0:
-                bottle_plan.append({
-                    "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
-                    "quantity": quantity
-                })
-                total_potions += quantity
+        quantity = 0
+        while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
+               blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
+               quantity < (max_potions - total_potions)):
+
+            quantity += 1
+            red_ml -= recipe['red_ml']
+            green_ml -= recipe['green_ml']
+            blue_ml -= recipe['blue_ml']
+            dark_ml -= recipe['dark_ml']
+
+        if quantity > 0:
+            bottle_plan.append({
+                "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
+                "quantity": quantity
+            })
+            total_potions += quantity
 
     print("Bottle Plan:", bottle_plan, "\n\n")
 
