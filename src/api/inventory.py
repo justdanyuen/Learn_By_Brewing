@@ -84,9 +84,48 @@ def get_capacity_plan():
     capacity unit costs 1000 gold.
     """
 
+    with db.engine.begin() as connection:
+        # Fetch ml_capacity and potion_capacity from the first row of capacity_ledger
+        capacities = connection.execute(sqlalchemy.text(
+            "SELECT ml_capacity, potion_capacity FROM capacity_ledger LIMIT 1"
+        )).fetchone()
+        ml_capacity = capacities.ml_capacity
+        potion_capacity = capacities.potion_capacity
+
+        # Fetch the total number of potions
+        current_potions = connection.execute(sqlalchemy.text(
+            "SELECT COALESCE(SUM(quantity), 0) FROM potion_ledger"
+        )).scalar()
+
+        # Fetch the total amount of ml in the ml_ledger
+        current_ml = connection.execute(sqlalchemy.text(
+            "SELECT COALESCE(SUM(net_change), 0) FROM ml_ledger"
+        )).scalar()
+
+        # Fetch the total amount of gold
+        gold = connection.execute(sqlalchemy.text(
+            "SELECT SUM(net_change) FROM gold_ledger"
+        )).scalar()
+
+        print(f"this is the current gold I got for capacity: {gold}")
+
+        add_to_pot = 0
+        add_to_ml = 0
+
+        total_cost = 0
+        if gold >= 2000:
+            total_cost -= 2000
+            add_to_pot += 1
+            add_to_ml += 1
+            
+        elif gold >= 1000:
+            total_cost -= 1000
+            add_to_ml += 1
+
+
     return {
-        "potion_capacity": 0,
-        "ml_capacity": 0
+        "potion_capacity": add_to_pot,
+        "ml_capacity": add_to_ml
         }
 
 class CapacityPurchase(BaseModel):
@@ -100,5 +139,23 @@ def deliver_capacity_plan(capacity_purchase : CapacityPurchase, order_id: int):
     Start with 1 capacity for 50 potions and 1 capacity for 10000 ml of potion. Each additional 
     capacity unit costs 1000 gold.
     """
+    # HARD CODED LOGIC RIGHT NOW TO PURCHASE IT IF I HAVE ENOUGH GOLD, BUT I NEED TO CHANGE THIS LOGIC
 
+    modified_ml = capacity_purchase.ml_capacity * 10000
+    modified_potion = capacity_purchase.potion_capacity * 50
+    modified_gold = (capacity_purchase.ml_capacity + capacity_purchase.potion_capacity) * 1000
+
+    with db.engine.begin() as connection:
+        connection.execute(sqlalchemy.text("""INSERT INTO capacity_ledger 
+                                                (ml_capacity, potion_capacity) VALUES
+                                                (:mls, :potions)"""),
+                                                [{
+                                                    'mls': modified_ml,
+                                                    'potions': modified_potion
+                                                }])
+
+        connection.execute(sqlalchemy.text("""
+                INSERT INTO gold_ledger (net_change, function, transaction)
+                VALUES (:cost, 'capacity plan', 'capacity purchase delivery');
+            """), {'cost': -modified_gold})
     return "OK"
