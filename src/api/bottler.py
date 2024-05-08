@@ -167,6 +167,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
                    blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and 
                    quantity + total_potions < max_potions):
+                
                 quantity += 1
                 red_ml -= recipe['red_ml']
                 green_ml -= recipe['green_ml']
@@ -180,6 +181,23 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                 total_potions += quantity
 
     print("Bottle Plan:", bottle_plan, "\n\n")
+
+    if not bottle_plan:
+        with db.engine.begin() as connection:
+            current_time = connection.execute(sqlalchemy.text("""
+                SELECT hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+                """)).first()  # Use first() to fetch the first result directly
+            if current_time:
+                hour = current_time[0]  # Extract the hour from the tuple
+                if hour in {2, 6, 10, 14, 18, 22}:
+                    bottle_plan.append({
+                                        "potion_type": [100, 0, 0, 0],
+                                        "quantity": 10
+                                    })
+                    print("It's a Barrel Order Tick! Trying to predict making some potions...")                
+            else:
+                print("No time data was retrieved.")
+    
     return bottle_plan
 
 if __name__ == "__main__":
