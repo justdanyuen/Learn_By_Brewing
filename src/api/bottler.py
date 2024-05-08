@@ -132,7 +132,7 @@ def get_bottle_plan():
         ).mappings().all()
 
         # Calculate available quantities from potion_ledger
-        potion_quantities = {}
+        potion_quantities = {recipe['id']: 0 for recipe in potion_inventory}  # Initialize quantities to 0
         potion_ledger_entries = connection.execute(sqlalchemy.text(
             "SELECT potion_id, SUM(quantity) AS total_quantity FROM potion_ledger GROUP BY potion_id;"
         )).mappings().all()
@@ -141,6 +141,16 @@ def get_bottle_plan():
 
         for entry in potion_ledger_entries:
             potion_quantities[entry['potion_id']] = entry['total_quantity']
+
+        merged_potion_inventory = [{
+            **potion,
+            'quantity': potion_quantities.get(potion['id'], 0)
+        } for potion in potion_inventory]
+
+        # Sort potion inventory by quantity
+        sorted_potion_inventory = sorted(merged_potion_inventory, key=lambda x: x['quantity'])
+
+        print(f"sorted potion inventory: {sorted_potion_inventory}")
 
         # Calculate how many potions can be made from the current ml totals
         bottle_plan = make_potions(ml_totals['red'], ml_totals['green'], ml_totals['blue'], ml_totals['dark'], potion_inventory, potion_quantities,max_potions_to_bottle)
