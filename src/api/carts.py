@@ -213,4 +213,4 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             else:
                 quantity = 0  # Reset quantity if not enough stock
 
-    return {"potions_bought": potions_bought, "total_gold_paid": gold_spent}
+    return {"total_potions_bought": potions_bought, "total_gold_paid": gold_spent}
