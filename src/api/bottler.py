@@ -150,7 +150,7 @@ def get_bottle_plan():
         # Sort potion inventory by quantity
         sorted_potion_inventory = sorted(merged_potion_inventory, key=lambda x: x['quantity'])
 
-        print(f"sorted potion inventory: {sorted_potion_inventory}")
+        # print(f"sorted potion inventory: {sorted_potion_inventory}")
 
         # Calculate how many potions can be made from the current ml totals
         bottle_plan = make_potions(ml_totals['red'], ml_totals['green'], ml_totals['blue'], ml_totals['dark'], sorted_potion_inventory, potion_quantities,max_potions_to_bottle, potion_capacity)
@@ -169,7 +169,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
         # print(f"red_ml: {red_ml} green_ml: {green_ml} blue_ml: {blue_ml} dark_ml: {dark_ml}")
         for recipe in potion_inventory:
             current_quantity = potion_quantities.get(recipe['id'], 0)  # Default to 0 if no entry exists
-            print(f"id: {recipe['id']} sku: {recipe['sku']} name: {recipe['name']} r: {recipe['red_ml']} g: {recipe['green_ml']} b: {recipe['blue_ml']} d: {recipe['dark_ml']} quantity: {current_quantity} price: {recipe['price']}")
+            # print(f"id: {recipe['id']} sku: {recipe['sku']} name: {recipe['name']} r: {recipe['red_ml']} g: {recipe['green_ml']} b: {recipe['blue_ml']} d: {recipe['dark_ml']} quantity: {current_quantity} price: {recipe['price']}")
 
         bottle_plan = []
         total_potions = 0  # Track the total number of potions created

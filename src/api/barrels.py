@@ -185,7 +185,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         print(f"Current ml Values - {ml_counts}")
         print(f"Current Gold: {gold_total}")
-        print(f"Current ml Capacity: {ml_capacity}")
+        # print(f"Current ml Capacity: {ml_capacity}")
 
 
         # Split the catalog into potion types
