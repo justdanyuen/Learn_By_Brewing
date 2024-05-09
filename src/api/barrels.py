@@ -80,18 +80,30 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 
     with db.engine.begin() as connection:
         try:
+
+            current_time = connection.execute(sqlalchemy.text("""
+                            SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+                        """)).first()  # Use first() to fetch the first result directly
+            
             # Update the gold ledger
-            connection.execute(sqlalchemy.text("""
-                INSERT INTO gold_ledger (net_change, function, transaction)
-                VALUES (:cost, 'deliver_barrels', :transaction);
-            """), {'cost': -total_cost, 'transaction': barrels_json})
+            if current_time:
+                connection.execute(sqlalchemy.text("""
+                    INSERT INTO gold_ledger (net_change, function, transaction, day, hour)
+                    VALUES (:cost, 'deliver_barrels', :transaction, :day, :hour);
+                """), {'cost': -total_cost, 
+                       'transaction': barrels_json, 
+                       'day': current_time.day, 
+                       'hour': current_time.hour})
+            else:
+                connection.execute(sqlalchemy.text("""
+                    INSERT INTO gold_ledger (net_change, function, transaction)
+                    VALUES (:cost, 'deliver_barrels', :transaction);
+                """), {'cost': -total_cost, 'transaction': barrels_json})
 
             # Insert changes into the ml_ledger
             for color, (ml_change, barrels_info) in potion_data.items():
                 if ml_change > 0:
-                    current_time = connection.execute(sqlalchemy.text("""
-                            SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
-                        """)).first()  # Use first() to fetch the first result directly
+                    
 
                     if current_time:  # Check if a result was returned
                         connection.execute(sqlalchemy.text("""

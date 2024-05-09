@@ -184,17 +184,32 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     }
                 )
 
-                # Update the gold ledger for tracking money spent
-                connection.execute(sqlalchemy.text(
-                    """
-                    INSERT INTO gold_ledger (net_change, function, transaction)
-                    VALUES (:net_change, 'checkout', :transaction);
-                    """),
-                    {
-                        'net_change': total_cost,  # Negative because it is an expenditure
-                        'transaction': json.dumps({"cart_id": cart_id, "item_sku": item_sku, "quantity": quantity})
-                    }
-                )
+                current_time = connection.execute(sqlalchemy.text("""
+                            SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+                        """)).first()  # Use first() to fetch the first result directly
+            
+                if current_time:
+                    connection.execute(sqlalchemy.text(
+                                            """
+                                            INSERT INTO gold_ledger (net_change, function, transaction, day, hour)
+                                            VALUES (:net_change, 'checkout', :transaction, :day, :hour);
+                                            """),   {'net_change': total_cost,  # Negative because it is an expenditure
+                                                    'transaction': json.dumps({"cart_id": cart_id, "item_sku": item_sku, "quantity": quantity}),
+                                                    'day': current_time.day,
+                                                    'hour': current_time.hour
+                                            })
+                else:
+                    # Update the gold ledger for tracking money spent
+                    connection.execute(sqlalchemy.text(
+                        """
+                        INSERT INTO gold_ledger (net_change, function, transaction)
+                        VALUES (:net_change, 'checkout', :transaction);
+                        """),
+                        {
+                            'net_change': total_cost,  # Negative because it is an expenditure
+                            'transaction': json.dumps({"cart_id": cart_id, "item_sku": item_sku, "quantity": quantity})
+                        }
+                    )
             else:
                 quantity = 0  # Reset quantity if not enough stock
 
