@@ -153,11 +153,11 @@ def get_bottle_plan():
         print(f"sorted potion inventory: {sorted_potion_inventory}")
 
         # Calculate how many potions can be made from the current ml totals
-        bottle_plan = make_potions(ml_totals['red'], ml_totals['green'], ml_totals['blue'], ml_totals['dark'], sorted_potion_inventory, potion_quantities,max_potions_to_bottle)
+        bottle_plan = make_potions(ml_totals['red'], ml_totals['green'], ml_totals['blue'], ml_totals['dark'], sorted_potion_inventory, potion_quantities,max_potions_to_bottle, potion_capacity)
 
     return bottle_plan
 
-def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_quantities,max_potions):
+def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_quantities,max_potions, capacity):
 
     with db.engine.begin() as connection:
 
@@ -185,15 +185,16 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
             print(f"The CURRENT QUANTITY of potion {recipe['id']} is: {current_quantity}")
 
-            if total_potions >= max_potions or current_quantity >= 10:
+            if total_potions >= max_potions or current_quantity >= (capacity / 5):
                 continue  # Stop processing if max potion limit is reached
             
             quantity = 0
             while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
                 blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
-                quantity < min(15, max_potions - total_potions) and total_potions < max_potions):
+                quantity < (capacity // 8) and total_potions < max_potions):
 
                 quantity += 1
+                total_potions += 1
                 red_ml -= recipe['red_ml']
                 green_ml -= recipe['green_ml']
                 blue_ml -= recipe['blue_ml']
@@ -204,7 +205,6 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                     "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
                     "quantity": quantity
                 })
-                total_potions += quantity
 
         print("Bottle Plan:", bottle_plan, "\n\n")
 
