@@ -36,6 +36,12 @@ def create_views():
             GROUP BY potion_id
         """))
 
+        connection.execute(sqlalchemy.text("""
+            CREATE OR REPLACE VIEW capacity_view AS
+            SELECT SUM(ml_capacity) AS ml_cap, SUM(potion_capacity) AS pot_cap
+            FROM capacity_ledger
+        """))
+
 # You might call this function to ensure all views are created or updated
 create_views()
 

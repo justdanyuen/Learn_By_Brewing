@@ -179,13 +179,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         )).scalar()
 
         ml_capacity = connection.execute(sqlalchemy.text(
-            "SELECT ml_capacity FROM capacity_ledger LIMIT 1"
+            "SELECT SUM(ml_capacity) FROM capacity_ledger"
         )).scalar()
 
 
         print(f"Current ml Values - {ml_counts}")
         print(f"Current Gold: {gold_total}\n")
-        # print(f"Current ml Capacity: {ml_capacity}")
+        print(f"Current ml Capacity: {ml_capacity}")
 
 
         # Split the catalog into potion types
@@ -237,13 +237,19 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             catalog.sort(key=lambda x: x.ml_per_barrel, reverse=True)
             
             for barrel in catalog:
-                if ml_counts[color] >= 500:
+                if ml_counts[color] >= 500 and color != 'dark':
                     continue #if I have 500ml, for now that's good 
 
                 if gold_total < barrel.price:
                     continue
 
-                quantity = min(barrel.quantity, (gold_total // barrel.price), (ml_capacity - total_ml) // barrel.ml_per_barrel)
+                # quantity = min(barrel.quantity, (gold_total // barrel.price), (ml_capacity - total_ml) // barrel.ml_per_barrel)
+                # Hard coded FOR NOW to max out at 10000 so I can have 10000 reserve for dark barrel purchases
+                if color == 'dark':
+                    quantity = 1
+                else:
+                    quantity = min(barrel.quantity, (gold_total // barrel.price), (10000 - total_ml) // barrel.ml_per_barrel)
+
 
                 if quantity == 0:
                     continue
