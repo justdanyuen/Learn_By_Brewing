@@ -177,7 +177,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
         for recipe in potion_inventory:
 
-            if recipe['red_ml'] == 100 and current_time.day == "Edgeday":
+            if (recipe['red_ml'] == 100 or recipe['dark_ml'] == 100) and current_time.day == "Edgeday":
                 print("It's Edgeday! Don't make any RED POTIONS TODAY!!!")
                 continue
 
@@ -191,7 +191,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             quantity = 0
             while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
                 blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
-                quantity < 15):
+                quantity < min(15, max_potions - total_potions) and total_potions < max_potions):
 
                 quantity += 1
                 red_ml -= recipe['red_ml']
