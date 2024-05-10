@@ -82,7 +82,7 @@ def get_inventory():
         "gold": total_gold
     }
 
-# Gets called once a day
+# Gets called once a day at 1pm tick (check this before it happens!!)
 @router.post("/plan")
 def get_capacity_plan():
     """ 
@@ -92,21 +92,21 @@ def get_capacity_plan():
 
     with db.engine.begin() as connection:
         # Fetch ml_capacity and potion_capacity from the first row of capacity_ledger
-        capacities = connection.execute(sqlalchemy.text(
-            "SELECT ml_capacity, potion_capacity FROM capacity_ledger LIMIT 1"
-        )).fetchone()
-        ml_capacity = capacities.ml_capacity
-        potion_capacity = capacities.potion_capacity
+        # capacities = connection.execute(sqlalchemy.text(
+        #     "SELECT ml_capacity, potion_capacity FROM capacity_ledger LIMIT 1"
+        # )).fetchone()
+        # ml_capacity = capacities.ml_capacity
+        # potion_capacity = capacities.potion_capacity
 
-        # Fetch the total number of potions
-        current_potions = connection.execute(sqlalchemy.text(
-            "SELECT COALESCE(SUM(quantity), 0) FROM potion_ledger"
-        )).scalar()
+        # # Fetch the total number of potions
+        # current_potions = connection.execute(sqlalchemy.text(
+        #     "SELECT COALESCE(SUM(quantity), 0) FROM potion_ledger"
+        # )).scalar()
 
-        # Fetch the total amount of ml in the ml_ledger
-        current_ml = connection.execute(sqlalchemy.text(
-            "SELECT COALESCE(SUM(net_change), 0) FROM ml_ledger"
-        )).scalar()
+        # # Fetch the total amount of ml in the ml_ledger
+        # current_ml = connection.execute(sqlalchemy.text(
+        #     "SELECT COALESCE(SUM(net_change), 0) FROM ml_ledger"
+        # )).scalar()
 
         # Fetch the total amount of gold
         gold = connection.execute(sqlalchemy.text(

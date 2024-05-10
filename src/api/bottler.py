@@ -188,9 +188,15 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             if current_time.day == "Edgeday" or (current_time.day == "Soulday" and current_time.hour >= 16): 
                 if recipe['red_ml'] == 100:
                     print("It's Edgeday! Don't make any RED POTIONS TODAY!!!")
+                    continue
                 elif recipe['dark_ml'] == 100:
                     print("It's Edgeday! Don't make any BLACK POTIONS TODAY!!!")
-                continue
+                    continue
+
+            if current_time.day == "Bloomday" or (current_time.day == "EdgeDay" and current_time.hour >= 16):
+                if recipe['red_ml'] == 100:
+                    print("It's Bloomday! Don't make any GREEN POTIONS TODAY!!!")
+                    continue
 
             current_quantity = potion_quantities.get(recipe['id'], 0)
 
