@@ -100,6 +100,12 @@ def get_bottle_plan():
     """
     with db.engine.begin() as connection:
 
+        print_time = connection.execute(sqlalchemy.text("""
+                SELECT CONCAT(day, ' ', hour) FROM time_table ORDER BY created_at DESC LIMIT 1;
+            """)).first()  # Use first() to fetch the first result directly
+        
+        print(f"The Day and Time is: {print_time}")
+
         # Calculate total number of potions already bottled
         total_existing_potions = connection.execute(sqlalchemy.text(
             "SELECT COALESCE(SUM(quantity), 0) AS total_potions FROM potion_ledger;"
@@ -139,7 +145,7 @@ def get_bottle_plan():
             "SELECT potion_id, SUM(quantity) AS total_quantity FROM potion_ledger GROUP BY potion_id;"
         )).mappings().all()
 
-        print(f"Potion Ledger Entries: {potion_ledger_entries}\n\n")
+        # print(f"Potion Ledger Entries: {potion_ledger_entries}\n\n")
 
         for entry in potion_ledger_entries:
             potion_quantities[entry['potion_id']] = entry['total_quantity']
@@ -167,7 +173,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                             SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
                         """)).first()  # Use first() to fetch the first result directly
 
-        print(f"The max number of potions I can make is {max_potions}")
+        print(f"The max number of potions I can make is: {max_potions}")
         # print(f"red_ml: {red_ml} green_ml: {green_ml} blue_ml: {blue_ml} dark_ml: {dark_ml}")
         for recipe in potion_inventory:
             current_quantity = potion_quantities.get(recipe['id'], 0)  # Default to 0 if no entry exists
@@ -179,8 +185,11 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
         for recipe in potion_inventory:
 
-            if (recipe['red_ml'] == 100 or recipe['dark_ml'] == 100) and current_time.day == "Edgeday":
-                print("It's Edgeday! Don't make any RED POTIONS TODAY!!!")
+            if current_time.day == "Edgeday" or (current_time.day == "Soulday" and current_time.hour >= 16): 
+                if recipe['red_ml'] == 100:
+                    print("It's Edgeday! Don't make any RED POTIONS TODAY!!!")
+                elif recipe['dark_ml'] == 100:
+                    print("It's Edgeday! Don't make any BLACK POTIONS TODAY!!!")
                 continue
 
             current_quantity = potion_quantities.get(recipe['id'], 0)

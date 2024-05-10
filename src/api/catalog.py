@@ -27,7 +27,7 @@ def get_catalog():
         ))
 
         for row in current_inventory:
-            print("Adding to catalog: " + str(row))
+            # print("Adding to catalog: " + str(row))
             sku = row.sku
             potion_type = [row.red_ml, row.green_ml, row.blue_ml, row.dark_ml]
             quantity = row.total_quantity
