@@ -43,6 +43,7 @@ def get_catalog():
                 "potion_type": potion_type,
             })
 
+    # hmmmm..... how optimal is this?
     catalog = catalog[:6]
 
 

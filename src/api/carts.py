@@ -55,31 +55,31 @@ def search_orders(
     time is 5 total line items.
     """
 
-    json = []
+    # json = []
 
-    # set sort order
-    if sort_col is search_sort_options.customer_name:
-        if sort_order is search_sort_order.asc:
-            order_by = db.carts.c.name
-        else:
-            order_by = sqlalchemy.desc(db.carts.c.name)
-    elif sort_col is search_sort_options.item_sku:
-        if sort_order is search_sort_order.asc:
-            order_by = db.cart_items.c.item_sku
-        else:
-            order_by = sqlalchemy.desc(db.cart_items.c.item_sku)
-    elif sort_col is search_sort_options.line_item_total:
-        if sort_order is search_sort_order.asc:
-            order_by = db.cart_items.c.quantity*db.catalog.c.price
-        else:
-            order_by = sqlalchemy.desc(db.cart_items.c.quantity*db.catalog.c.price)
-    elif sort_col is search_sort_options.timestamp:
-        if sort_order is search_sort_order.asc:
-            order_by = db.cart_items.c.created_at
-        else:
-            order_by = sqlalchemy.desc(db.cart_items.c.created_at)
-    else:
-        assert False
+    # # set sort order
+    # if sort_col is search_sort_options.customer_name:
+    #     if sort_order is search_sort_order.asc:
+    #         order_by = db.carts.c.name
+    #     else:
+    #         order_by = sqlalchemy.desc(db.carts.c.name)
+    # elif sort_col is search_sort_options.item_sku:
+    #     if sort_order is search_sort_order.asc:
+    #         order_by = db.cart_items.c.item_sku
+    #     else:
+    #         order_by = sqlalchemy.desc(db.cart_items.c.item_sku)
+    # elif sort_col is search_sort_options.line_item_total:
+    #     if sort_order is search_sort_order.asc:
+    #         order_by = db.cart_items.c.quantity*db.catalog.c.price
+    #     else:
+    #         order_by = sqlalchemy.desc(db.cart_items.c.quantity*db.catalog.c.price)
+    # elif sort_col is search_sort_options.timestamp:
+    #     if sort_order is search_sort_order.asc:
+    #         order_by = db.cart_items.c.created_at
+    #     else:
+    #         order_by = sqlalchemy.desc(db.cart_items.c.created_at)
+    # else:
+    #     assert False
 
 
     
