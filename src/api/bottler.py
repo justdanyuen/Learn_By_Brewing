@@ -218,10 +218,10 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                 hour = current_time[0]  # Extract the hour from the tuple
                 if hour in {2, 6, 10, 14, 18, 22}:
                     bottle_plan.append({
-                                        "potion_type": [100, 0, 0, 0],
+                                        "potion_type": [0, 100, 0, 0],
                                         "quantity": 10
                                     })
-                    print("It's a Barrel Order Tick! Trying to predict making some potions...")                
+                    print("It's a Barrel Order Tick! Trying to predict making some green potions...")                
             else:
                 print("No time data was retrieved.")
     
