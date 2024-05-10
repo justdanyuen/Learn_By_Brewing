@@ -146,7 +146,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ Determine the optimal barrels to purchase based on current ml and gold statuses in ledgers. """
 
-    print("**********\nWholesale Catalog:")
+    print("******************************\n******************************\n******************************\nWholesale Catalog:")
     for barrel in wholesale_catalog:
         print(f"SKU: {barrel.sku}, ML per Barrel: {barrel.ml_per_barrel}, "
               f"Potion Type: {barrel.potion_type}, Price: {barrel.price}, Quantity: {barrel.quantity}")
@@ -184,8 +184,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
 
         print(f"Current ml Values - {ml_counts}")
-        print(f"Current Gold: {gold_total}\n")
-        print(f"Current ml Capacity: {ml_capacity}")
+        print(f"Current Gold: {gold_total}")
+        print(f"Current ml Capacity: {ml_capacity}\n")
 
 
         # Split the catalog into potion types
@@ -261,7 +261,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 else:
                     print(f"Not enough gold, has {gold_total} but requires {barrel.price * quantity}")
 
-                print(f"Barrels to purchase: {barrels_to_purchase}\n**********\n")   
+                print(f"Barrels to purchase: {barrels_to_purchase}\n******************************\n******************************\n******************************\n")   
     return barrels_to_purchase  
 
 def try_purchase_barrels(gold, barrel, barrels_to_purchase, quantity):
