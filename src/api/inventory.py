@@ -147,7 +147,6 @@ def get_capacity_plan():
             total_cost -= 1000
             add_to_ml += 1
 
-
     return {
         "potion_capacity": 0,
         "ml_capacity": 0
