@@ -5,6 +5,8 @@ from enum import Enum
 import sqlalchemy
 from src import database as db
 import json
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
 
 router = APIRouter(
     prefix="/carts",
@@ -54,49 +56,98 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
+    
 
-    # json = []
 
-    # # set sort order
-    # if sort_col is search_sort_options.customer_name:
-    #     if sort_order is search_sort_order.asc:
-    #         order_by = db.carts.c.name
-    #     else:
-    #         order_by = sqlalchemy.desc(db.carts.c.name)
-    # elif sort_col is search_sort_options.item_sku:
-    #     if sort_order is search_sort_order.asc:
-    #         order_by = db.cart_items.c.item_sku
-    #     else:
-    #         order_by = sqlalchemy.desc(db.cart_items.c.item_sku)
-    # elif sort_col is search_sort_options.line_item_total:
-    #     if sort_order is search_sort_order.asc:
-    #         order_by = db.cart_items.c.quantity*db.catalog.c.price
-    #     else:
-    #         order_by = sqlalchemy.desc(db.cart_items.c.quantity*db.catalog.c.price)
-    # elif sort_col is search_sort_options.timestamp:
-    #     if sort_order is search_sort_order.asc:
-    #         order_by = db.cart_items.c.created_at
-    #     else:
-    #         order_by = sqlalchemy.desc(db.cart_items.c.created_at)
-    # else:
-    #     assert False
+    with db.engine.begin() as connection:
 
+        # Decide sort column type
+        if sort_col == search_sort_options.timestamp:
+            sort_by = db.cart_items.c.created_at
+        elif sort_col == search_sort_options.customer_name:
+            sort_by = db.carts.c.name
+        elif sort_col == search_sort_options.item_sku:
+            sort_by = db.cart_items.c.item_sku
+        elif sort_col == search_sort_options.line_item_total:
+            sort_by = db.cart_items.c.quantity
+        else:
+            assert False
+
+        if sort_order == search_sort_order.desc:
+            order_by = sqlalchemy.desc(sort_by)
+        else:
+            order_by = sqlalchemy.asc(sort_by)
+
+        filter_conditions = []
+        if customer_name:
+            filter_conditions.append(db.carts.c.name.ilike(f"%{customer_name}%"))
+        if potion_sku:
+            filter_conditions.append(db.cart_items.c.item_sku.ilike(f"%{potion_sku}%"))
+
+        total_carts = connection.execute(sqlalchemy.text("SELECT COUNT(*) FROM cart_items")).scalar_one()
+
+        current_page = int(search_page) if search_page else 0
+
+        # Calculate the offset based on the current page
+        offset = current_page * 5
+
+        # Determine the tokens for previous and next pages
+        prev_token = str(current_page - 1) if current_page > 0 else ""
+        next_token = str(current_page + 1) if (current_page + 1) * 5 < total_carts else ""
+
+        stmt = (
+            sqlalchemy.select(
+                db.cart_items.c.cart_id,
+                db.cart_items.c.potion_id,
+                db.cart_items.c.quantity,
+                db.cart_items.c.item_sku,
+                db.cart_items.c.price,
+                (db.cart_items.c.quantity * db.potion_inventory.c.price).label("line_item_total"),
+                db.carts.c.id,
+                db.carts.c.name,
+                db.potion_inventory.c.name,
+                db.carts.c.created_at.label("timestamp"),
+                db.potion_inventory.c.sku,
+            )
+            .order_by(order_by)
+            .limit(5)
+            .offset(offset)
+            .select_from(
+                db.cart_items
+                .join(db.carts, db.cart_items.c.cart_id == db.carts.c.id)
+                .join(db.potion_inventory, db.cart_items.c.potion_id == db.potion_inventory.c.id)
+            )
+        )
+
+        if customer_name != "":
+        # filter for similar names
+            stmt = stmt.where(db.carts.c.name.ilike(f"%{customer_name}%"))
+
+        if potion_sku != "":
+            # filter for sku
+            stmt = stmt.where(db.potion_inventory.c.sku.ilike(f"%{potion_sku}%"))
+
+
+        result = connection.execute(stmt)
+
+        json_result = []
+        for row in result:
+            json_result.append({
+                "line_item_id": row.cart_id,
+                "item_sku": row.item_sku,
+                "customer_name": row.name,
+                "line_item_total": row.line_item_total,
+                "timestamp": row.timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")  # ISO 8601
+            })
+
+        print(json_result)
 
     
     return {
-        "previous": "",
-        "next": "",
-        "results": [
-            {
-                "line_item_id": 1,
-                "item_sku": "1 oblivion potion",
-                "customer_name": "Scaramouche",
-                "line_item_total": 50,
-                "timestamp": "2021-01-01T00:00:00Z",
-            }
-        ],
+        "previous": prev_token,
+        "next": next_token,
+        "results": json_result
     }
-
 
 class Customer(BaseModel):
     customer_name: str
