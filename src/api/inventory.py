@@ -55,6 +55,12 @@ def create_views():
             FROM ml_ledger
         """))
 
+        connection.execute(sqlalchemy.text("""
+            CREATE OR REPLACE VIEW total_potions_view AS
+            SELECT SUM(quantity) AS total_potions
+            FROM potion_ledger
+        """))
+
 # You might call this function to ensure all views are created or updated
 create_views()
 
@@ -143,8 +149,8 @@ def get_capacity_plan():
 
 
     return {
-        "potion_capacity": add_to_pot,
-        "ml_capacity": add_to_ml
+        "potion_capacity": 0,
+        "ml_capacity": 0
         }
 
 class CapacityPurchase(BaseModel):
