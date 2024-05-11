@@ -39,17 +39,35 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
                 sku = potion_type_info['sku']
                 price_per_unit = potion_type_info['price']
 
-                # Record transaction in potion_ledger
-                connection.execute(sqlalchemy.text("""
-                    INSERT INTO potion_ledger (potion_id, quantity, transaction, cost, function)
-                    VALUES (:potion_id, :quantity, 'delivery', :cost, :function);
-                    """), {
-                    'potion_id': potion_id,
-                    'quantity': potion.quantity,
-                    'cost': price_per_unit,
-                    'transaction': json.dumps({'order_id': order_id, 'ml_per_type': potion.potion_type}),
-                    'function': "post_deliver_bottles"
-                })
+                current_time = connection.execute(sqlalchemy.text("""
+                            SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+                        """)).first()  # Use first() to fetch the first result directly
+
+                if current_time:  # Check if a result was returned
+                    # Record transaction in potion_ledger
+                    connection.execute(sqlalchemy.text("""
+                        INSERT INTO potion_ledger (potion_id, quantity, transaction, cost, function, day, hour)
+                        VALUES (:potion_id, :quantity, 'delivery', :cost, :function, :day, :hour);
+                        """), {
+                        'potion_id': potion_id,
+                        'quantity': potion.quantity,
+                        'cost': price_per_unit,
+                        'transaction': json.dumps({'order_id': order_id, 'ml_per_type': potion.potion_type}),
+                        'function': "post_deliver_bottles",
+                        'day': current_time.day,
+                        'hour': current_time.hour
+                    })
+                else:
+                    connection.execute(sqlalchemy.text("""
+                        INSERT INTO potion_ledger (potion_id, quantity, transaction, cost, function)
+                        VALUES (:potion_id, :quantity, 'delivery', :cost, :function);
+                        """), {
+                        'potion_id': potion_id,
+                        'quantity': potion.quantity,
+                        'cost': price_per_unit,
+                        'transaction': json.dumps({'order_id': order_id, 'ml_per_type': potion.potion_type}),
+                        'function': "post_deliver_bottles"
+                    })
 
                 # Aggregate ml changes for each color
                 ml_changes['red'] -= potion.potion_type[0] * potion.quantity
@@ -185,7 +203,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
         for recipe in potion_inventory:
 
-            if current_time.day == "Edgeday" or (current_time.day == "Soulday" and current_time.hour >= 16): 
+            if (current_time.day == "Edgeday" and current_time.hour < 18) or (current_time.day == "Soulday" and current_time.hour >= 18): 
                 if recipe['red_ml'] == 100:
                     print("It's Edgeday! Don't make any RED POTIONS TODAY!!!")
                     continue
@@ -193,9 +211,14 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                     print("It's Edgeday! Don't make any BLACK POTIONS TODAY!!!")
                     continue
 
-            if current_time.day == "Bloomday" or (current_time.day == "EdgeDay" and current_time.hour >= 16):
+            if (current_time.day == "Bloomday" and current_time.hour < 18) or (current_time.day == "Edgeday" and current_time.hour >= 18):
                 if recipe['green_ml'] == 100:
                     print("It's Bloomday! Don't make any GREEN POTIONS TODAY!!!")
+                    continue
+
+            if (current_time.day == "Arcanaday" and current_time.hour < 18) or (current_time.day == "Bloomday" and current_time.hour >= 18):
+                if recipe['blue_ml'] == 100:
+                    print("It's Arcanaday! Don't make any BLUE POTIONS TODAY!!!")
                     continue
 
             # Don't make any potions other than dark for now
