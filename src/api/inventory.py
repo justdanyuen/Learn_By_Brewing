@@ -42,6 +42,19 @@ def create_views():
             FROM capacity_ledger
         """))
 
+        connection.execute(sqlalchemy.text("""
+            CREATE OR REPLACE VIEW potion_quantities_sold AS
+            SELECT item_sku, SUM(quantity) AS total_quantity
+            FROM cart_items
+            GROUP BY item_sku;
+        """))
+
+        connection.execute(sqlalchemy.text("""
+            CREATE OR REPLACE VIEW total_ml_view AS
+            SELECT SUM(net_change) AS total_ml
+            FROM ml_ledger
+        """))
+
 # You might call this function to ensure all views are created or updated
 create_views()
 
