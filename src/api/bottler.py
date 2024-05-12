@@ -222,36 +222,37 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                     continue
 
             # Don't make any potions other than dark for now
-            # if recipe['dark_ml'] != 100:
-            #     continue
+            if recipe['dark_ml'] != 100:
+                continue
 
             current_quantity = potion_quantities.get(recipe['id'], 0)
 
             print(f"The CURRENT QUANTITY of potion {recipe['id']} is: {current_quantity}")
 
-            if total_potions >= max_potions or current_quantity >= (capacity / 5):
-                continue  # Stop processing if max potion limit is reached
+            # if total_potions >= max_potions or current_quantity >= (capacity / 5):
+            #     continue  # Stop processing if max potion limit is reached
             
             quantity = 0
 
             # Dark Bottler Plan
-            # while (dark_ml >= recipe['dark_ml'] and
-            #     quantity < max_potions):
-            #     quantity += 1
-            #     total_potions += 1
-            #     dark_ml -= recipe['dark_ml']
-
-            # Default bottler plan  
-            while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
-                blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
-                quantity < (capacity // 8) and total_potions < max_potions):
-
+            while (dark_ml >= recipe['dark_ml'] and
+                current_quantity < 30):
+                current_quantity += 1
                 quantity += 1
                 total_potions += 1
-                red_ml -= recipe['red_ml']
-                green_ml -= recipe['green_ml']
-                blue_ml -= recipe['blue_ml']
                 dark_ml -= recipe['dark_ml']
+
+            # Default bottler plan  
+            # while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
+            #     blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
+            #     quantity < (capacity // 8) and total_potions < max_potions):
+
+            #     quantity += 1
+            #     total_potions += 1
+            #     red_ml -= recipe['red_ml']
+            #     green_ml -= recipe['green_ml']
+            #     blue_ml -= recipe['blue_ml']
+            #     dark_ml -= recipe['dark_ml']
 
             if quantity > 0:
                 bottle_plan.append({
