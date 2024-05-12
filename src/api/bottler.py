@@ -122,7 +122,7 @@ def get_bottle_plan():
                 SELECT CONCAT(day, ' ', hour) FROM time_table ORDER BY created_at DESC LIMIT 1;
             """)).first()  # Use first() to fetch the first result directly
         
-        print(f"The Day and Time is: {print_time}")
+        print(f"******************************\n******************************\n******************************\nThe Day and Time is: {print_time}")
 
         # Calculate total number of potions already bottled
         total_existing_potions = connection.execute(sqlalchemy.text(
@@ -149,6 +149,8 @@ def get_bottle_plan():
             color = entry['barrel_type']
             if color in ml_totals:
                 ml_totals[color] += entry['net_change']
+
+        print(f"Current ml levels: {ml_totals}")
 
         # print(f"{ml_totals}\n\n")
 
@@ -191,7 +193,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                             SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
                         """)).first()  # Use first() to fetch the first result directly
 
-        print(f"The max number of potions I can make is: {max_potions}")
+        print(f"The max number of potions I can make is: {max_potions}\n")
         for recipe in potion_inventory:
             current_quantity = potion_quantities.get(recipe['id'], 0)  # Default to 0 if no entry exists
             # print(f"id: {recipe['id']} sku: {recipe['sku']} name: {recipe['name']} r: {recipe['red_ml']} g: {recipe['green_ml']} b: {recipe['blue_ml']} d: {recipe['dark_ml']} quantity: {current_quantity} price: {recipe['price']}")
@@ -262,7 +264,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                     "quantity": quantity
                 })
 
-        print("Bottle Plan:", bottle_plan, "\n\n")
+        print("Bottle Plan:", bottle_plan, "\n******************************\n******************************\n******************************\n\n")
 
         if not bottle_plan:
             current_time = connection.execute(sqlalchemy.text("""
