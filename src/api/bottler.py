@@ -192,16 +192,18 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                         """)).first()  # Use first() to fetch the first result directly
 
         print(f"The max number of potions I can make is: {max_potions}")
-        # print(f"red_ml: {red_ml} green_ml: {green_ml} blue_ml: {blue_ml} dark_ml: {dark_ml}")
         for recipe in potion_inventory:
             current_quantity = potion_quantities.get(recipe['id'], 0)  # Default to 0 if no entry exists
             # print(f"id: {recipe['id']} sku: {recipe['sku']} name: {recipe['name']} r: {recipe['red_ml']} g: {recipe['green_ml']} b: {recipe['blue_ml']} d: {recipe['dark_ml']} quantity: {current_quantity} price: {recipe['price']}")
 
         bottle_plan = []
         total_potions = 0  # Track the total number of potions created
-        # print(f"total ml: {total_ml}")
 
         for recipe in potion_inventory:
+
+            # I DONT WANT ANY MORE ORANGE OR BLUE I GIVE UP ON THEM FOR NOW
+            if recipe['red_ml'] == 75 or recipe['blue_ml'] == 100:
+                continue
 
             if (current_time.day == "Edgeday" and current_time.hour < 18) or (current_time.day == "Soulday" and current_time.hour >= 18): 
                 if recipe['red_ml'] == 100:
@@ -222,37 +224,37 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                     continue
 
             # Don't make any potions other than dark for now
-            if recipe['dark_ml'] != 100:
-                continue
+            # if recipe['dark_ml'] != 100:
+            #     continue
 
             current_quantity = potion_quantities.get(recipe['id'], 0)
 
             print(f"The CURRENT QUANTITY of potion {recipe['id']} is: {current_quantity}")
 
-            # if total_potions >= max_potions or current_quantity >= (capacity / 5):
-            #     continue  # Stop processing if max potion limit is reached
+            if total_potions >= max_potions or current_quantity >= (capacity / 5):
+                continue  # Stop processing if max potion limit is reached
             
             quantity = 0
 
             # Dark Bottler Plan
-            while (dark_ml >= recipe['dark_ml'] and
-                current_quantity < 30):
-                current_quantity += 1
-                quantity += 1
-                total_potions += 1
-                dark_ml -= recipe['dark_ml']
-
-            # Default bottler plan  
-            # while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
-            #     blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
-            #     quantity < (capacity // 8) and total_potions < max_potions):
-
+            # while (dark_ml >= recipe['dark_ml'] and
+            #     current_quantity < 30):
+            #     current_quantity += 1
             #     quantity += 1
             #     total_potions += 1
-            #     red_ml -= recipe['red_ml']
-            #     green_ml -= recipe['green_ml']
-            #     blue_ml -= recipe['blue_ml']
             #     dark_ml -= recipe['dark_ml']
+
+            # Default bottler plan  
+            while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
+                blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
+                quantity < (capacity // 8) and total_potions < max_potions):
+
+                quantity += 1
+                total_potions += 1
+                red_ml -= recipe['red_ml']
+                green_ml -= recipe['green_ml']
+                blue_ml -= recipe['blue_ml']
+                dark_ml -= recipe['dark_ml']
 
             if quantity > 0:
                 bottle_plan.append({
@@ -262,20 +264,20 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
         print("Bottle Plan:", bottle_plan, "\n\n")
 
-        # if not bottle_plan:
-        #     current_time = connection.execute(sqlalchemy.text("""
-        #         SELECT hour FROM time_table ORDER BY created_at DESC LIMIT 1;
-        #         """)).first()  # Use first() to fetch the first result directly
-        #     if current_time:
-        #         hour = current_time[0]  # Extract the hour from the tuple
-        #         if hour in {2, 6, 10, 14, 18, 22}:
-        #             bottle_plan.append({
-        #                                 "potion_type": [0, 100, 0, 0],
-        #                                 "quantity": 10
-        #                             })
-        #             print("It's a Barrel Order Tick! Trying to predict making some green potions...")                
-        #     else:
-        #         print("No time data was retrieved.")
+        if not bottle_plan:
+            current_time = connection.execute(sqlalchemy.text("""
+                SELECT hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+                """)).first()  # Use first() to fetch the first result directly
+            if current_time:
+                hour = current_time[0]  # Extract the hour from the tuple
+                if hour in {2, 6, 10, 14, 18, 22}:
+                    bottle_plan.append({
+                                        "potion_type": [100, 0, 0, 0],
+                                        "quantity": 20
+                                    })
+                    print("It's a Barrel Order Tick! Trying to predict making some green potions...")                
+            else:
+                print("No time data was retrieved.")
     
     return bottle_plan
 
