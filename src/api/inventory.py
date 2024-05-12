@@ -46,7 +46,8 @@ def create_views():
             CREATE OR REPLACE VIEW potion_quantities_sold AS
             SELECT item_sku, SUM(quantity) AS total_quantity
             FROM cart_items
-            GROUP BY item_sku;
+            GROUP BY item_sku
+            ORDER BY SUM(quantity) ASC;
         """))
 
         connection.execute(sqlalchemy.text("""
@@ -61,13 +62,42 @@ def create_views():
             FROM potion_ledger
         """))
 
-# You might call this function to ensure all views are created or updated
-create_views()
+# def update_preferences():
+#     with db.engine.begin() as connection:
+#         connection.execute(sqlalchemy.text("""
+#             WITH SoldQuantities AS (
+#                 SELECT 
+#                     item_sku, 
+#                     SUM(quantity) AS total_quantity
+#                 FROM 
+#                     cart_items
+#                 GROUP BY 
+#                     item_sku
+#             ),
+#             RankedItems AS (
+#                 SELECT 
+#                     item_sku, 
+#                     total_quantity,
+#                     RANK() OVER (ORDER BY total_quantity DESC) AS preference
+#                 FROM 
+#                     SoldQuantities
+#             )
+#             UPDATE 
+#                 preference_table
+#             SET 
+#                 quantity = RankedItems.total_quantity,
+#                 preference = RankedItems.preference
+#             FROM 
+#                 RankedItems
+#             WHERE 
+#                 preference_table.item_sku = RankedItems.item_sku;
+#     """))
 
 @router.get("/audit")
 def get_inventory():
     """ Computes inventory and financial state from ledger tables. """
     create_views()  # Ensure views are created or updated
+    # update_preferences()
     with db.engine.begin() as connection:
         # Aggregate changes in ml_ledger for each barrel type
         ml_totals = connection.execute(sqlalchemy.text("""
