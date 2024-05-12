@@ -243,7 +243,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             catalog.sort(key=lambda x: x.ml_per_barrel, reverse=True)
             
             for barrel in catalog:
-                if ml_counts[color] >= 500 and color != 'dark':
+                if ml_counts[color] >= 3000 and color != 'dark':
                     continue #if I have 500ml, for now that's good 
 
                 if gold_total < barrel.price:
