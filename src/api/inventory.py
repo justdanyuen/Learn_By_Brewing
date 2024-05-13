@@ -178,8 +178,8 @@ def get_capacity_plan():
             add_to_ml += 1
 
     return {
-        "potion_capacity": 0,
-        "ml_capacity": 0
+        "potion_capacity": 2,
+        "ml_capacity": 5
         }
 
 class CapacityPurchase(BaseModel):
