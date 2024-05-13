@@ -193,124 +193,124 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         available_capacity = ml_capacity - total_ml
 
         # Determine which colors offer large barrels and are available
-        large_barrels_available = {color: [] for color in ['red', 'green', 'blue', 'dark']}
-        for barrel in wholesale_catalog:
-            if "LARGE" in barrel.sku:
-                if barrel.potion_type[0]:
-                    large_barrels_available['red'].append(barrel)
-                elif barrel.potion_type[1]:
-                    large_barrels_available['green'].append(barrel)
-                elif barrel.potion_type[2]:
-                    large_barrels_available['blue'].append(barrel)
-                elif barrel.potion_type[3]:
-                    large_barrels_available['dark'].append(barrel)
+        # large_barrels_available = {color: [] for color in ['red', 'green', 'blue', 'dark']}
+        # for barrel in wholesale_catalog:
+        #     if "LARGE" in barrel.sku:
+        #         if barrel.potion_type[0]:
+        #             large_barrels_available['red'].append(barrel)
+        #         elif barrel.potion_type[1]:
+        #             large_barrels_available['green'].append(barrel)
+        #         elif barrel.potion_type[2]:
+        #             large_barrels_available['blue'].append(barrel)
+        #         elif barrel.potion_type[3]:
+        #             large_barrels_available['dark'].append(barrel)
 
-        # Sort barrels within each color by cost-effectiveness
-        for color, barrels in large_barrels_available.items():
-            barrels.sort(key=lambda x: x.price / x.ml_per_barrel)
+        # # Sort barrels within each color by cost-effectiveness
+        # for color, barrels in large_barrels_available.items():
+        #     barrels.sort(key=lambda x: x.price / x.ml_per_barrel)
 
         # Purchase logic: try to buy at least one of each color available, prioritize repeats of black and red
-        color_priority = ['dark', 'red', 'green', 'blue']  # Prioritize purchasing dark and red for repeats
-        for color in color_priority:
-            for barrel in large_barrels_available[color]:
-                if gold_total >= barrel.price and available_capacity >= barrel.ml_per_barrel:
-                    quantity = 1  # Start with one barrel
-                    if large_barrel_purchases[color] < 2:  # Allow up to two barrels of the same color
-                        success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
-                        if success:
-                            large_barrel_purchases[color] += 1
-                            ml_counts[color] += barrel.ml_per_barrel * quantity
-                            total_ml += barrel.ml_per_barrel * quantity
-                            available_capacity -= barrel.ml_per_barrel * quantity
-                            if large_barrel_purchases[color] == 2:
-                                break  # Stop if two barrels of this color have been purchased
+        # color_priority = ['dark', 'red', 'green', 'blue']  # Prioritize purchasing dark and red for repeats
+        # for color in color_priority:
+        #     for barrel in large_barrels_available[color]:
+        #         if gold_total >= barrel.price and available_capacity >= barrel.ml_per_barrel:
+        #             quantity = 1  # Start with one barrel
+        #             if large_barrel_purchases[color] < 2:  # Allow up to two barrels of the same color
+        #                 success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
+        #                 if success:
+        #                     large_barrel_purchases[color] += 1
+        #                     ml_counts[color] += barrel.ml_per_barrel * quantity
+        #                     total_ml += barrel.ml_per_barrel * quantity
+        #                     available_capacity -= barrel.ml_per_barrel * quantity
+        #                     if large_barrel_purchases[color] == 2:
+        #                         break  # Stop if two barrels of this color have been purchased
 
 
-        # # working_capacity = ml_capacity - 10000
-        # # available_capacity = working_capacity - total_ml
+        # working_capacity = ml_capacity - 10000
+        # available_capacity = working_capacity - total_ml
 
-        # print(f"The available ml I'm working with is: {available_capacity}\n")
+        print(f"The available ml I'm working with is: {available_capacity}\n")
 
-        # # Split the catalog into potion types
-        # potion_type_catalogs = {
-        #     'red': [],
-        #     'green': [],
-        #     'blue': [],
-        #     'dark': []
-        # }
-        # for barrel in wholesale_catalog:
-        #     if "LARGE" in barrel.sku or "MEDIUM" in barrel.sku:
-        #         if barrel.potion_type == [1, 0, 0, 0]:
-        #             potion_type_catalogs['red'].append(barrel)
-        #         elif barrel.potion_type == [0, 1, 0, 0]:
-        #             potion_type_catalogs['green'].append(barrel)
-        #         elif barrel.potion_type == [0, 0, 1, 0]:
-        #             potion_type_catalogs['blue'].append(barrel)
-        #         elif barrel.potion_type == [0, 0, 0, 1]:
-        #             potion_type_catalogs['dark'].append(barrel)
+        # Split the catalog into potion types
+        potion_type_catalogs = {
+            'red': [],
+            'green': [],
+            'blue': [],
+            'dark': []
+        }
+        for barrel in wholesale_catalog:
+            if "LARGE" in barrel.sku or "MEDIUM" in barrel.sku:
+                if barrel.potion_type == [1, 0, 0, 0]:
+                    potion_type_catalogs['red'].append(barrel)
+                elif barrel.potion_type == [0, 1, 0, 0]:
+                    potion_type_catalogs['green'].append(barrel)
+                elif barrel.potion_type == [0, 0, 1, 0]:
+                    potion_type_catalogs['blue'].append(barrel)
+                elif barrel.potion_type == [0, 0, 0, 1]:
+                    potion_type_catalogs['dark'].append(barrel)
 
-        # # Sort each type by cost-effectiveness
-        # for color in potion_type_catalogs:
-        #     potion_type_catalogs[color].sort(key=lambda x: x.price / x.ml_per_barrel)
-        #     print(f"Sorted {color.capitalize()} Offers:", potion_type_catalogs[color])
-        #     print("\n")
+        # Sort each type by cost-effectiveness
+        for color in potion_type_catalogs:
+            potion_type_catalogs[color].sort(key=lambda x: x.price / x.ml_per_barrel)
+            print(f"Sorted {color.capitalize()} Offers:", potion_type_catalogs[color])
+            print("\n")
 
-        # if potion_type_catalogs['dark']:
+        if potion_type_catalogs['dark']:
 
-        #     # Execute query and fetch the first result
-        #     current_time = connection.execute(sqlalchemy.text("""
-        #         SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
-        #     """)).first()  # Use first() to fetch the first result directly
+            # Execute query and fetch the first result
+            current_time = connection.execute(sqlalchemy.text("""
+                SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+            """)).first()  # Use first() to fetch the first result directly
 
-        #     if current_time:  # Check if a result was returned
-        #         day = current_time.day  # Access columns directly via the result
-        #         hour = current_time.hour
+            if current_time:  # Check if a result was returned
+                day = current_time.day  # Access columns directly via the result
+                hour = current_time.hour
 
-        #         # Execute the insertion with the fetched day and hour
-        #         connection.execute(sqlalchemy.text("""
-        #             INSERT INTO dark_order_tracker (day, hour)
-        #             VALUES (:day, :hour);
-        #         """), {'day': day, 'hour': hour})
+                # Execute the insertion with the fetched day and hour
+                connection.execute(sqlalchemy.text("""
+                    INSERT INTO dark_order_tracker (day, hour)
+                    VALUES (:day, :hour);
+                """), {'day': day, 'hour': hour})
 
 
-        # # Purchase decision logic - Prioritize larger barrels first
-        # for color in ['dark', 'red', 'green', 'blue']:
-        #     catalog = potion_type_catalogs[color]
+        # Purchase decision logic - Prioritize larger barrels first
+        for color in ['dark', 'red', 'green', 'blue']:
+            catalog = potion_type_catalogs[color]
             
-        #     # Sort the catalog by ml_per_barrel in descending order
-        #     catalog.sort(key=lambda x: x.ml_per_barrel, reverse=True)
+            # Sort the catalog by ml_per_barrel in descending order
+            catalog.sort(key=lambda x: x.ml_per_barrel, reverse=True)
             
-        #     for barrel in catalog:
+            for barrel in catalog:
                 
-        #         if ml_counts[color] >= 3000 and color != 'dark':
-        #         # if ml_counts[color] >= 3000:
-        #             continue #if I have 500ml, for now that's good 
+                # if ml_counts[color] >= 3000 and color != 'dark':
+                if ml_counts[color] >= 6000:
+                    continue #if I have 500ml, for now that's good 
 
-        #         if gold_total < barrel.price:
-        #             continue
+                if gold_total < barrel.price:
+                    continue
 
-        #         # quantity = min(barrel.quantity, (gold_total // barrel.price), (ml_capacity - total_ml) // barrel.ml_per_barrel)
-        #         # Hard coded FOR NOW to max out at 10000 so I can have 10000 reserve for dark barrel purchases
-        #         if color == 'dark':
-        #             quantity = 1
-        #         else:
-        #             quantity = min(barrel.quantity, (gold_total // barrel.price), available_capacity // barrel.ml_per_barrel)
+                # quantity = min(barrel.quantity, (gold_total // barrel.price), (ml_capacity - total_ml) // barrel.ml_per_barrel)
+                # Hard coded FOR NOW to max out at 10000 so I can have 10000 reserve for dark barrel purchases
+                if color == 'dark':
+                    quantity = 1
+                else:
+                    quantity = min(barrel.quantity, (gold_total // barrel.price), available_capacity // barrel.ml_per_barrel)
 
-        #         if quantity <= 0:
-        #             continue
+                if quantity <= 0:
+                    continue
 
-        #         success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
-        #         if success:
-        #             ml_added = barrel.ml_per_barrel * quantity
-        #             ml_counts[color] += barrel.ml_per_barrel * quantity
-        #             total_ml += ml_added
-        #             available_capacity -= ml_added  # Deduct the used capacity from available
+                success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
+                if success:
+                    ml_added = barrel.ml_per_barrel * quantity
+                    ml_counts[color] += barrel.ml_per_barrel * quantity
+                    total_ml += ml_added
+                    available_capacity -= ml_added  # Deduct the used capacity from available
 
-        #             if available_capacity <= 0:
-        #                 break  # Exit if no more capacity is available
+                    if available_capacity <= 0:
+                        break  # Exit if no more capacity is available
 
-        #         else:
-        #             print(f"Not enough gold, has {gold_total} but requires {barrel.price * quantity}")
+                else:
+                    print(f"Not enough gold, has {gold_total} but requires {barrel.price * quantity}")
 
         print(f"Barrels to purchase: {barrels_to_purchase}\n******************************\n******************************\n******************************\n")   
     return barrels_to_purchase  
