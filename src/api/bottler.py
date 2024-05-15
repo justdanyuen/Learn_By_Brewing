@@ -205,101 +205,101 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             print(f"recipe: {recipe}")
 
 
-            if recipe['green_ml'] == 100:
-                quantity = max_potions // 2
-                total_potions += quantity
-                bottle_plan.append({
-                    "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
-                    "quantity": quantity
-                })
-            elif recipe['red_ml'] == 100:
-                quantity = (max_potions // 8) * 3
-                total_potions += quantity
-                bottle_plan.append({
-                    "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
-                    "quantity": quantity
-                })
-            elif recipe['dark_ml'] == 100:
-                quantity = (max_potions // 8)
-                total_potions += quantity
-                bottle_plan.append({
-                    "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
-                    "quantity": quantity
-                })
-            else:
-                continue
-
-
-
-
-
-
-            # # I DONT WANT ANY MORE ORANGE OR BLUE I GIVE UP ON THEM FOR NOW
-            # if recipe['red_ml'] == 75 or recipe['blue_ml'] == 100:
-            #     continue
-            
-            # # If it's day-time, don't try to make any dark potions. Start making them right before night starts, and until it ends.
-            # # if current_time.hour >= 6 and current_time.hour <= 16 and recipe['dark_ml'] == 100:
-            # #     continue
-
-            # if (current_time.day == "Edgeday" and current_time.hour < 18) or (current_time.day == "Soulday" and current_time.hour >= 18): 
-            #     if recipe['red_ml'] == 100:
-            #         print("It's Edgeday! Don't make any RED POTIONS TODAY!!!")
-            #         continue
-            #     elif recipe['dark_ml'] == 100:
-            #         print("It's Edgeday! Don't make any BLACK POTIONS TODAY!!!")
-            #         continue
-
-            # if (current_time.day == "Bloomday" and current_time.hour < 18) or (current_time.day == "Edgeday" and current_time.hour >= 18):
-            #     if recipe['green_ml'] == 100:
-            #         print("It's Bloomday! Don't make any GREEN POTIONS TODAY!!!")
-            #         continue
-
-            # if (current_time.day == "Arcanaday" and current_time.hour < 18) or (current_time.day == "Bloomday" and current_time.hour >= 18):
-            #     if recipe['blue_ml'] == 100:
-            #         print("It's Arcanaday! Don't make any BLUE POTIONS TODAY!!!")
-            #         continue
-
-            # # Don't make any potions other than dark for now
-            # # if recipe['dark_ml'] != 100:
-            # #     continue
-
-            # current_quantity = potion_quantities.get(recipe['id'], 0)
-
-            # print(f"The CURRENT QUANTITY of potion {recipe['id']} is: {current_quantity}")
-
-            # if total_potions >= max_potions or current_quantity >= (capacity / 5):
-            #     continue  # Stop processing if max potion limit is reached
-            
-            # quantity = 0
-
-            # # Dark Bottler Plan
-            # # while (dark_ml >= recipe['dark_ml'] and
-            # #     current_quantity < 30):
-            # #     current_quantity += 1
-            # #     quantity += 1
-            # #     total_potions += 1
-            # #     dark_ml -= recipe['dark_ml']
-
-            # # Default bottler plan  
-            # while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
-            #     blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
-            #     quantity < (capacity // 10) and total_potions < max_potions):
-
-            #     quantity += 1
-            #     total_potions += 1
-            #     red_ml -= recipe['red_ml']
-            #     green_ml -= recipe['green_ml']
-            #     blue_ml -= recipe['blue_ml']
-            #     dark_ml -= recipe['dark_ml']
-
-
-
-            # if quantity > 0:
+            # if recipe['green_ml'] == 100:
+            #     quantity = max_potions // 2
+            #     total_potions += quantity
             #     bottle_plan.append({
             #         "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
             #         "quantity": quantity
             #     })
+            # elif recipe['red_ml'] == 100:
+            #     quantity = (max_potions // 8) * 3
+            #     total_potions += quantity
+            #     bottle_plan.append({
+            #         "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
+            #         "quantity": quantity
+            #     })
+            # elif recipe['dark_ml'] == 100:
+            #     quantity = (max_potions // 8)
+            #     total_potions += quantity
+            #     bottle_plan.append({
+            #         "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
+            #         "quantity": quantity
+            #     })
+            # else:
+            #     continue
+
+
+
+
+
+
+            # I DONT WANT ANY MORE ORANGE OR BLUE I GIVE UP ON THEM FOR NOW
+            if recipe['red_ml'] == 75 or recipe['blue_ml'] == 100:
+                continue
+            
+            # If it's day-time, don't try to make any dark potions. Start making them right before night starts, and until it ends.
+            # if current_time.hour >= 6 and current_time.hour <= 16 and recipe['dark_ml'] == 100:
+            #     continue
+
+            if (current_time.day == "Edgeday" and current_time.hour < 18) or (current_time.day == "Soulday" and current_time.hour >= 18): 
+                if recipe['red_ml'] == 100:
+                    print("It's Edgeday! Don't make any RED POTIONS TODAY!!!")
+                    continue
+                elif recipe['dark_ml'] == 100:
+                    print("It's Edgeday! Don't make any BLACK POTIONS TODAY!!!")
+                    continue
+
+            if (current_time.day == "Bloomday" and current_time.hour < 18) or (current_time.day == "Edgeday" and current_time.hour >= 18):
+                if recipe['green_ml'] == 100:
+                    print("It's Bloomday! Don't make any GREEN POTIONS TODAY!!!")
+                    continue
+
+            if (current_time.day == "Arcanaday" and current_time.hour < 18) or (current_time.day == "Bloomday" and current_time.hour >= 18):
+                if recipe['blue_ml'] == 100:
+                    print("It's Arcanaday! Don't make any BLUE POTIONS TODAY!!!")
+                    continue
+
+            # Don't make any potions other than dark for now
+            # if recipe['dark_ml'] != 100:
+            #     continue
+
+            current_quantity = potion_quantities.get(recipe['id'], 0)
+
+            print(f"The CURRENT QUANTITY of potion {recipe['id']} is: {current_quantity}")
+
+            if total_potions >= max_potions or current_quantity >= (capacity / 5):
+                continue  # Stop processing if max potion limit is reached
+            
+            quantity = 0
+
+            # Dark Bottler Plan
+            # while (dark_ml >= recipe['dark_ml'] and
+            #     current_quantity < 30):
+            #     current_quantity += 1
+            #     quantity += 1
+            #     total_potions += 1
+            #     dark_ml -= recipe['dark_ml']
+
+            # Default bottler plan  
+            while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
+                blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
+                quantity < (capacity // 10) and total_potions < max_potions):
+
+                quantity += 1
+                total_potions += 1
+                red_ml -= recipe['red_ml']
+                green_ml -= recipe['green_ml']
+                blue_ml -= recipe['blue_ml']
+                dark_ml -= recipe['dark_ml']
+
+
+
+            if quantity > 0:
+                bottle_plan.append({
+                    "potion_type": [recipe['red_ml'], recipe['green_ml'], recipe['blue_ml'], recipe['dark_ml']],
+                    "quantity": quantity
+                })
 
 
         print(f"The total number of potions we bottled was {total_potions}")
