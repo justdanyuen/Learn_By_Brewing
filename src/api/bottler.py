@@ -201,6 +201,9 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
         bottle_plan = []
         total_potions = 0  # Track the total number of potions created
 
+        num_recipes = len(potion_inventory)
+
+
         for recipe in potion_inventory:
             print(f"recipe: {recipe}")
 
@@ -228,9 +231,6 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             #     })
             # else:
             #     continue
-
-
-
 
 
 
@@ -273,6 +273,12 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             
             quantity = 0
 
+            diff_filler = max(0, (capacity // num_recipes) - current_quantity)
+            
+            if diff_filler <= 0:
+                continue
+            print(f"I need {diff_filler} potions to fill up the set amount that I want")
+
             # Dark Bottler Plan
             # while (dark_ml >= recipe['dark_ml'] and
             #     current_quantity < 30):
@@ -284,7 +290,8 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             # Default bottler plan  
             while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
                 blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
-                quantity < (capacity // 10) and total_potions < max_potions):
+                quantity < diff_filler and total_potions < max_potions and
+                current_quantity + quantity < (capacity / 5)):
 
                 quantity += 1
                 total_potions += 1
