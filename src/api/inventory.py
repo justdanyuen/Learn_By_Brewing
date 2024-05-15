@@ -177,10 +177,10 @@ def get_capacity_plan():
             total_cost -= 1000
             add_to_ml += 1
 
-    add_to_pot = 0
-    add_to_ml = 0
+    add_to_pot = 2
+    add_to_ml = 2
 
-
+    # passively purchase 4 capacities every day
     print(f"Adding {add_to_pot} capacities to potions, {add_to_ml} capacities to ml")
     return {
         "potion_capacity": add_to_pot,
