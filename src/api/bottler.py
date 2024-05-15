@@ -232,11 +232,16 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             # else:
             #     continue
 
-
+            max_to_make = 0
 
             # I DONT WANT ANY MORE ORANGE OR BLUE I GIVE UP ON THEM FOR NOW
             if recipe['red_ml'] == 75 or recipe['red_ml'] == 33 or recipe['blue_ml'] == 100:
                 continue
+
+            if recipe['dark_ml'] == 50:
+                max_to_make = 25
+            else:
+                max_to_make = (capacity // 10)
             
             # If it's day-time, don't try to make any dark potions. Start making them right before night starts, and until it ends.
             # if current_time.hour >= 6 and current_time.hour <= 16 and recipe['dark_ml'] == 100:
@@ -295,7 +300,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
             while (red_ml >= recipe['red_ml'] and green_ml >= recipe['green_ml'] and
                 blue_ml >= recipe['blue_ml'] and dark_ml >= recipe['dark_ml'] and
-                quantity < (capacity // 10) and total_potions < max_potions):
+                quantity < max_to_make and total_potions < max_potions):
 
                 quantity += 1
                 total_potions += 1
