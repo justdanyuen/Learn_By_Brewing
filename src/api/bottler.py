@@ -235,7 +235,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
 
             # I DONT WANT ANY MORE ORANGE OR BLUE I GIVE UP ON THEM FOR NOW
-            if recipe['red_ml'] == 75 or recipe['blue_ml'] == 100:
+            if recipe['blue_ml'] == 100:
                 continue
             
             # If it's day-time, don't try to make any dark potions. Start making them right before night starts, and until it ends.
