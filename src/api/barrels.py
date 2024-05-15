@@ -314,8 +314,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 print(f"quantity: {quantity}")
 
                 # Ensure that adding this quantity does not exceed the desired ml per color
-                if ml_counts[color] + barrel.ml_per_barrel * quantity > 20000:
-                    quantity = (20000 - ml_counts[color]) // barrel.ml_per_barrel
+                if ml_counts[color] + barrel.ml_per_barrel * quantity > desired_ml_per_color:
+                    quantity = (desired_ml_per_color - ml_counts[color]) // barrel.ml_per_barrel
                 print(f"checked quantity: {quantity}")
 
                 # Final purchasing decision
