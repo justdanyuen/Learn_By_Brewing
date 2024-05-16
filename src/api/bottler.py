@@ -205,7 +205,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
 
         for recipe in potion_inventory:
-            print(f"recipe: {recipe}")
+            # print(f"recipe: {recipe}")
 
 
             # if recipe['green_ml'] == 100:
@@ -242,7 +242,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                 # max_to_make = 25
                 continue
             else:
-                max_to_make = (capacity // 10)
+                max_to_make = (capacity // 20)
             
             # If it's day-time, don't try to make any dark potions. Start making them right before night starts, and until it ends.
             # if current_time.hour >= 6 and current_time.hour <= 16 and recipe['dark_ml'] == 100:
@@ -257,6 +257,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                     continue
                 elif recipe['red_ml'] == 50 and recipe['green_ml'] == 50:
                     print("It's Edgeday! Don't make any YELLOW POTIONS TODAY!!!")
+                    continue
 
             if (current_time.day == "Bloomday" and current_time.hour < 18) or (current_time.day == "Edgeday" and current_time.hour >= 18):
                 if recipe['green_ml'] == 100:
