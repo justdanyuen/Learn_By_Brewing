@@ -246,24 +246,43 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 potions_bought += quantity
                 gold_spent += total_cost
 
-                # Record potion transaction in potion_ledger
-                connection.execute(sqlalchemy.text(
-                    """
-                    INSERT INTO potion_ledger (potion_id, quantity, function, transaction, cost)
-                    VALUES (:potion_id, - :quantity, 'sale', :transaction, :cost);
-                    """),
-                    {
-                        "potion_id": potion_id,
-                        "quantity": quantity,  # Negative because it's a sale
-                        "function": "checkout",
-                        "transaction": json.dumps({"cart_id": cart_id, "item_sku": item_sku}),
-                        "cost": total_cost
-                    }
-                )
-
                 current_time = connection.execute(sqlalchemy.text("""
-                            SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
-                        """)).first()  # Use first() to fetch the first result directly
+                SELECT hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+                """)).first()  # Use first() to fetch the first result directly
+
+                if current_time:
+
+                    # Record potion transaction in potion_ledger
+                    connection.execute(sqlalchemy.text(
+                        """
+                        INSERT INTO potion_ledger (potion_id, quantity, function, transaction, cost, day, hour)
+                        VALUES (:potion_id, - :quantity, 'sale', :transaction, :cost, :day, :hour);
+                        """),
+                        {
+                            "potion_id": potion_id,
+                            "quantity": quantity,  # Negative because it's a sale
+                            "function": "checkout",
+                            "transaction": json.dumps({"cart_id": cart_id, "item_sku": item_sku}),
+                            "cost": total_cost, 
+                            "day": current_time.day,
+                            "hour": current_time.hour
+                        }
+                    )
+                else:
+                    # Record potion transaction in potion_ledger
+                    connection.execute(sqlalchemy.text(
+                        """
+                        INSERT INTO potion_ledger (potion_id, quantity, function, transaction, cost)
+                        VALUES (:potion_id, - :quantity, 'sale', :transaction, :cost);
+                        """),
+                        {
+                            "potion_id": potion_id,
+                            "quantity": quantity,  # Negative because it's a sale
+                            "function": "checkout",
+                            "transaction": json.dumps({"cart_id": cart_id, "item_sku": item_sku}),
+                            "cost": total_cost
+                        }
+                    )
             
                 if current_time:
                     connection.execute(sqlalchemy.text(
