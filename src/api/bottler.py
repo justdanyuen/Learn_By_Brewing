@@ -238,8 +238,9 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             if recipe['red_ml'] == 75 or recipe['red_ml'] == 33 or recipe['blue_ml'] == 100:
                 continue
 
-            if recipe['dark_ml'] == 50:
-                max_to_make = 25
+            if recipe['dark_ml'] == 50 or recipe['dark_ml'] == 25:
+                # max_to_make = 25
+                continue
             else:
                 max_to_make = (capacity // 10)
             
@@ -254,6 +255,8 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                 elif recipe['dark_ml'] == 100:
                     print("It's Edgeday! Don't make any BLACK POTIONS TODAY!!!")
                     continue
+                elif recipe['red_ml'] == 50 and recipe['green_ml'] == 50:
+                    print("It's Edgeday! Don't make any YELLOW POTIONS TODAY!!!")
 
             if (current_time.day == "Bloomday" and current_time.hour < 18) or (current_time.day == "Edgeday" and current_time.hour >= 18):
                 if recipe['green_ml'] == 100:
@@ -265,6 +268,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
                     print("It's Arcanaday! Don't make any BLUE POTIONS TODAY!!!")
                     continue
 
+
             # Don't make any potions other than dark for now
             # if recipe['dark_ml'] != 100:
             #     continue
@@ -273,7 +277,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
             print(f"The CURRENT QUANTITY of potion {recipe['id']} is: {current_quantity}")
 
-            if total_potions >= max_potions or current_quantity >= (capacity / 5):
+            if total_potions >= max_potions or current_quantity >= (capacity // 7):
                 continue  # Stop processing if max potion limit is reached
             
             quantity = 0
