@@ -235,7 +235,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             max_to_make = 0
 
             # I DONT WANT ANY MORE ORANGE OR BLUE I GIVE UP ON THEM FOR NOW
-            if recipe['red_ml'] == 75 or recipe['red_ml'] == 33 or recipe['blue_ml'] == 100:
+            if recipe['red_ml'] == 75 or recipe['red_ml'] == 33:
                 continue
 
             if recipe['dark_ml'] == 50 or recipe['dark_ml'] == 25:
@@ -278,7 +278,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
             print(f"The CURRENT QUANTITY of potion {recipe['id']} is: {current_quantity}")
 
-            if total_potions >= max_potions or current_quantity >= (capacity // 7):
+            if total_potions >= max_potions or current_quantity >= (capacity // 8):
                 continue  # Stop processing if max potion limit is reached
             
             quantity = 0
