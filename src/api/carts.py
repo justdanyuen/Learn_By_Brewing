@@ -218,6 +218,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ Process checkout, updating financial and inventory records using ledgers """
     gold_spent = 0
     potions_bought = 0
+    print("Initating Checkout")
     with db.engine.begin() as connection:
         # Fetch all items in the cart
         cart_contents = connection.execute(sqlalchemy.text(
@@ -247,11 +248,12 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 gold_spent += total_cost
 
                 current_time = connection.execute(sqlalchemy.text("""
-                SELECT hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+                SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
                 """)).first()  # Use first() to fetch the first result directly
 
-                if current_time:
+                print(f"The current time is {current_time.day} {current_time.hour}")
 
+                if current_time:
                     # Record potion transaction in potion_ledger
                     connection.execute(sqlalchemy.text(
                         """
