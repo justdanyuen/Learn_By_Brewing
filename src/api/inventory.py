@@ -120,7 +120,7 @@ def create_views():
 @router.get("/audit")
 def get_inventory():
     """ Computes inventory and financial state from ledger tables. """
-    create_views()  # Ensure views are created or updated
+    # create_views()  # Ensure views are created or updated
     # update_preferences()
     with db.engine.begin() as connection:
         # Aggregate changes in ml_ledger for each barrel type
