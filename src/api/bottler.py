@@ -235,7 +235,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
             max_to_make = 0
 
             # I DONT WANT ANY MORE ORANGE
-            if recipe['red_ml'] == 75 or recipe['dark_ml'] == 25:
+            if recipe['red_ml'] == 75:
                 continue
             else:
                 max_to_make = (capacity // 20)
