@@ -196,7 +196,7 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
         print(f"The max number of potions I can make is: {max_potions}\n")
         for recipe in potion_inventory:
             current_quantity = potion_quantities.get(recipe['id'], 0)  # Default to 0 if no entry exists
-            # print(f"id: {recipe['id']} sku: {recipe['sku']} name: {recipe['name']} r: {recipe['red_ml']} g: {recipe['green_ml']} b: {recipe['blue_ml']} d: {recipe['dark_ml']} quantity: {current_quantity} price: {recipe['price']}")
+            print(f"id: {recipe['id']} sku: {recipe['sku']} name: {recipe['name']} r: {recipe['red_ml']} g: {recipe['green_ml']} b: {recipe['blue_ml']} d: {recipe['dark_ml']} quantity: {current_quantity} price: {recipe['price']}")
 
         bottle_plan = []
         total_potions = 0  # Track the total number of potions created
@@ -234,12 +234,8 @@ def make_potions(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, potion_qu
 
             max_to_make = 0
 
-            # I DONT WANT ANY MORE ORANGE OR BLUE I GIVE UP ON THEM FOR NOW
-            if recipe['red_ml'] == 75 or recipe['red_ml'] == 33:
-                continue
-
-            if recipe['dark_ml'] == 50 or recipe['dark_ml'] == 25:
-                # max_to_make = 25
+            # I DONT WANT ANY MORE ORANGE
+            if recipe['red_ml'] == 75 or recipe['dark_ml'] == 25:
                 continue
             else:
                 max_to_make = (capacity // 20)
