@@ -78,12 +78,12 @@ def get_catalog():
             price = row.price
             print("Number of " + str(potion_type) + " potions offered: " + str(quantity))
 
-            if any([((current_time.day == "Edgeday" and current_time.hour < 22) or (current_time.day == "Soulday" and current_time.hour >= 22)) and potion_type[0] == 100, #RED
-                    ((current_time.day == "Bloomday" and current_time.hour < 22) or (current_time.day == "Edgeday" and current_time.hour >= 22)) and potion_type[1] == 100, #GREEN
-                    ((current_time.day == "Arcanaday" and current_time.hour < 22) or (current_time.day == "Bloom" and current_time.hour >= 22)) and potion_type[2] == 100, #BLUE
-                    ((current_time.day == "Edgeday" and current_time.hour < 22) or (current_time.day == "Soulday" and current_time.hour >= 22)) and potion_type[3] == 100, #BLACK 
-                    ((current_time.day == "Edgeday" and current_time.hour < 22) or (current_time.day == "Soulday" and current_time.hour >= 22)) and (potion_type[0] == 50 and potion_type[1] == 50), #YELLOW
-                    ((current_time.day == "Soulday" and current_time.hour < 22) or (current_time.day == "Blesseday" and current_time.hour >= 22)) and (potion_type[0] == 50 and potion_type[2] == 50)]): #PURPLE POTIONS
+            if any([(current_time.day == "Edgeday" and current_time.hour <= 22) and potion_type[0] == 100, #RED
+                    (current_time.day == "Bloomday" and current_time.hour <= 22) and potion_type[1] == 100, #GREEN
+                    (current_time.day == "Arcanaday" and current_time.hour <= 22) and potion_type[2] == 100, #BLUE
+                    (current_time.day == "Edgeday" and current_time.hour <= 22) and potion_type[3] == 100, #BLACK 
+                    (current_time.day == "Edgeday" and current_time.hour <= 22) and (potion_type[0] == 50 and potion_type[1] == 50), #YELLOW
+                    (current_time.day == "Soulday" and current_time.hour <= 22) and (potion_type[0] == 50 and potion_type[2] == 50)]): #PURPLE POTIONS
                 print(f"Not adding {name} to catalog because it's {current_time.day} {current_time.hour}")
                 continue
 
