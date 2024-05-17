@@ -13,4 +13,3 @@ metadata.reflect(bind=engine)
 carts = metadata.tables['carts']
 cart_items = metadata.tables['cart_items']
 potion_inventory = metadata.tables['potion_inventory']
-preference_table = metadata.tables['preference_table']

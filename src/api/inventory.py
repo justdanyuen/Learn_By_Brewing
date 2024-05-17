@@ -62,6 +62,30 @@ def create_views():
             FROM potion_ledger
         """))
 
+        connection.execute(sqlalchemy.text("""
+        CREATE VIEW potions_sales_summary AS
+        SELECT 
+            potion_id,                          
+            item_sku,
+            SUM(CASE WHEN day = 'Edgeday' THEN quantity ELSE 0 END) AS Edgeday,
+            SUM(CASE WHEN day = 'Bloomday' THEN quantity ELSE 0 END) AS Bloomday,
+            SUM(CASE WHEN day = 'Arcanaday' THEN quantity ELSE 0 END) AS Arcanaday,
+            SUM(CASE WHEN day = 'Hearthday' THEN quantity ELSE 0 END) AS Hearthday,
+            SUM(CASE WHEN day = 'Crownday' THEN quantity ELSE 0 END) AS Crownday,
+            SUM(CASE WHEN day = 'Blesseday' THEN quantity ELSE 0 END) AS Blesseday,
+            SUM(CASE WHEN day = 'Soulday' THEN quantity ELSE 0 END) AS Soulday
+        FROM 
+            cart_items
+        GROUP BY 
+            potion_id, item_sku
+        ORDER BY 
+            potion_id
+        """))
+
+        # connection.execute(sqlalchemy.text(""" DROP VIEW potions_sales_summary"""))
+
+
+
 # def update_preferences():
 #     with db.engine.begin() as connection:
 #         connection.execute(sqlalchemy.text("""
