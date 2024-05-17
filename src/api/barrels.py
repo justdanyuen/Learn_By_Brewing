@@ -172,9 +172,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             if ml['barrel_type'] in ml_counts:
                 ml_counts[ml['barrel_type']] = ml['total_ml']
 
-        large_barrel_purchases = {color: 0 for color in ['red', 'green', 'blue', 'dark']}
-
-
         total_ml = sum(ml_counts.values())
 
         gold_total = connection.execute(sqlalchemy.text(
@@ -231,6 +228,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         print(f"The available ml I'm working with is: {available_capacity}\n")
 
+        net_total = 0
+
         # Split the catalog into potion types
         potion_type_catalogs = {
             'red': [],
@@ -272,15 +271,15 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     VALUES (:day, :hour);
                 """), {'day': day, 'hour': hour})
 
-        desired_ml_per_color = 20000  # Example desired ml per potion type
+        desired_ml_per_color = 25000  # Example desired ml per potion type
 
         # Purchase decision logic - Prioritize larger barrels first
-        for color in ['red', 'green', 'blue']:
+        for color in ['dark', 'red', 'green', 'blue']:
             catalog = potion_type_catalogs[color]
             print(f"Checking {color} barrels:\n")
 
-            if color == 'dark':
-                continue
+            # if color == 'dark':
+            #     continue
             
             # Sort the catalog by ml_per_barrel in descending order
             catalog.sort(key=lambda x: x.ml_per_barrel, reverse=True)
@@ -318,6 +317,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     quantity = (desired_ml_per_color - ml_counts[color]) // barrel.ml_per_barrel
                 print(f"checked quantity: {quantity}")
 
+                if color == 'dark':
+                    quantity = 1
+
                 # Final purchasing decision
                 if quantity > 0:
                     success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
@@ -326,6 +328,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                         ml_counts[color] += ml_added
                         total_ml += ml_added
                         available_capacity -= ml_added
+                        net_total += barrel.ml_per_barrel * quantity
                                 
                 # quantity = min(barrel.quantity, (gold_total // barrel.price), available_capacity // barrel.ml_per_barrel)
 
@@ -346,6 +349,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 #     print(f"Not enough gold, has {gold_total} but requires {barrel.price * quantity}")
 
         print(f"Barrels to purchase: {barrels_to_purchase}\n******************************\n******************************\n******************************\n")   
+        print(f"The total amount of ml we purchased on this tick was {net_total}")
     return barrels_to_purchase  
 
 def try_purchase_barrels(gold, barrel, barrels_to_purchase, quantity):
