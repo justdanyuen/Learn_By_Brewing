@@ -278,8 +278,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             catalog = potion_type_catalogs[color]
             print(f"Checking {color} barrels:\n")
 
-            # if color == 'dark':
-            #     continue
+            if color == 'dark':
+                continue
             
             # Sort the catalog by ml_per_barrel in descending order
             catalog.sort(key=lambda x: x.ml_per_barrel, reverse=True)
