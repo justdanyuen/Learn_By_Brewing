@@ -238,7 +238,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             'dark': []
         }
         for barrel in wholesale_catalog:
-            if "LARGE" in barrel.sku or "MEDIUM" in barrel.sku:
+            if "LARGE" in barrel.sku:
                 if barrel.potion_type == [1, 0, 0, 0]:
                     potion_type_catalogs['red'].append(barrel)
                 elif barrel.potion_type == [0, 1, 0, 0]:
