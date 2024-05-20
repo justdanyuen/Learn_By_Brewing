@@ -271,15 +271,15 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     VALUES (:day, :hour);
                 """), {'day': day, 'hour': hour})
 
-        desired_ml_per_color = 25000  # Example desired ml per potion type
+        desired_ml_per_color = 35000  # Example desired ml per potion type
 
         # Purchase decision logic - Prioritize larger barrels first
         for color in ['dark', 'red', 'green', 'blue']:
             catalog = potion_type_catalogs[color]
             print(f"Checking {color} barrels:\n")
 
-            if color == 'dark':
-                continue
+            # if color == 'dark':
+            #     continue
             
             # Sort the catalog by ml_per_barrel in descending order
             catalog.sort(key=lambda x: x.ml_per_barrel, reverse=True)
