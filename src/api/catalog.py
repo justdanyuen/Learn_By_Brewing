@@ -70,31 +70,31 @@ def get_catalog():
 
         dark_blue = None
 
-        # Find the inventory item with id 10
-        for item in inventory_list:
-            if item['id'] == 10:
-                dark_blue = item
-                break
+        # # Find the inventory item with id 10
+        # for item in inventory_list:
+        #     if item['id'] == 10:
+        #         dark_blue = item
+        #         break
 
-        if dark_blue:
-            current_time = connection.execute(sqlalchemy.text("""
-                                SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
-                            """)).first()  # Use first() to fetch the first result directly
+        # if dark_blue:
+        #     current_time = connection.execute(sqlalchemy.text("""
+        #                         SELECT day, hour FROM time_table ORDER BY created_at DESC LIMIT 1;
+        #                     """)).first()  # Use first() to fetch the first result directly
             
-            print(f"\nThe current time is {current_time.day}  {current_time.hour}")
+        #     print(f"\nThe current time is {current_time.day}  {current_time.hour}")
             
-            sku = dark_blue['sku']
-            potion_type = [dark_blue['red_ml'], dark_blue['green_ml'], dark_blue['blue_ml'], dark_blue['dark_ml']]
-            quantity = dark_blue['total_quantity']
-            name = dark_blue['name']
-            price = dark_blue['price']
-            catalog.append({
-                    "sku": sku,
-                    "name": name,
-                    "quantity": quantity,
-                    "price": price,
-                    "potion_type": potion_type,
-                })
+        #     sku = dark_blue['sku']
+        #     potion_type = [dark_blue['red_ml'], dark_blue['green_ml'], dark_blue['blue_ml'], dark_blue['dark_ml']]
+        #     quantity = dark_blue['total_quantity']
+        #     name = dark_blue['name']
+        #     price = dark_blue['price']
+        #     catalog.append({
+        #             "sku": sku,
+        #             "name": name,
+        #             "quantity": quantity,
+        #             "price": price,
+        #             "potion_type": potion_type,
+        #         })
 
         for row in inventory_list:
             # print("Adding to catalog: " + str(row))
