@@ -348,9 +348,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 # else:
                 #     print(f"Not enough gold, has {gold_total} but requires {barrel.price * quantity}")
 
-        # # Don'y buy anymore barrels it's grindtime
-        # print("setting the barrel plan to empty, closing down our shop!")
-        # barrels_to_purchase = []
+        # Don'y buy anymore barrels it's grindtime
+        print("setting the barrel plan to empty, closing down our shop!")
+        barrels_to_purchase = []
 
         print(f"Barrels to purchase: {barrels_to_purchase}\n******************************\n******************************\n******************************\n")   
         print(f"The total amount of ml we purchased on this tick was {net_total}")
