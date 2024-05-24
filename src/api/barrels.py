@@ -238,7 +238,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             'dark': []
         }
         for barrel in wholesale_catalog:
-            if "LARGE" in barrel.sku:
+            if "LARGE" in barrel.sku or "MEDIUM" in barrel.sku:
                 if barrel.potion_type == [1, 0, 0, 0]:
                     potion_type_catalogs['red'].append(barrel)
                 elif barrel.potion_type == [0, 1, 0, 0]:
@@ -273,21 +273,51 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         desired_ml_per_color = 35000  # Example desired ml per potion type
 
+        gold_spent = 0
         # Purchase decision logic - Prioritize larger barrels first
         for color in ['red', 'green', 'blue']:
             catalog = potion_type_catalogs[color]
             print(f"Checking {color} barrels:\n")
 
-            if catalog and gold_total >= catalog[0].price and available_capacity >= catalog[0].ml_per_barrel:
-                barrel = catalog[0]
-                quantity = 1
-                success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
-                if success:
-                    ml_added = barrel.ml_per_barrel * quantity
-                    ml_counts[color] += ml_added
-                    total_ml += ml_added
-                    available_capacity -= ml_added
-                    net_total += barrel.ml_per_barrel * quantity
+            large_barrel = next((barrel for barrel in catalog if "LARGE" in barrel.sku), None)
+            if large_barrel:
+                if gold_total >= large_barrel.price and available_capacity >= large_barrel.ml_per_barrel:
+                    quantity = 1
+                    success, gold_total = try_purchase_barrels(gold_total, large_barrel, barrels_to_purchase, quantity)
+                    if success:
+                        ml_added = large_barrel.ml_per_barrel * quantity
+                        ml_counts[color] += ml_added
+                        gold_spent += large_barrel.price * quantity
+                        total_ml += ml_added
+                        available_capacity -= ml_added
+                        net_total += large_barrel.ml_per_barrel * quantity
+                    continue
+
+            medium_barrels = [barrel for barrel in catalog if "MEDIUM" in barrel.sku]
+            if medium_barrels:
+                if gold_total >= medium_barrels[0].price * 2 and available_capacity >= medium_barrels[0].ml_per_barrel * 2:
+                    barrel = medium_barrels[0]
+                    quantity = 2
+                    success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
+                    if success:
+                        ml_added = barrel.ml_per_barrel * quantity
+                        ml_counts[color] += ml_added
+                        gold_spent += barrel.price * quantity
+                        total_ml += ml_added
+                        available_capacity -= ml_added
+                        net_total += barrel.ml_per_barrel * quantity
+                    continue
+
+            # if catalog and gold_total >= catalog[0].price and available_capacity >= catalog[0].ml_per_barrel:
+            #     barrel = catalog[0]
+            #     quantity = 1
+            #     success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
+            #     if success:
+            #         ml_added = barrel.ml_per_barrel * quantity
+            #         ml_counts[color] += ml_added
+            #         total_ml += ml_added
+            #         available_capacity -= ml_added
+            #         net_total += barrel.ml_per_barrel * quantity
 
             
             # # Sort the catalog by ml_per_barrel in descending order
@@ -363,6 +393,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         print(f"Barrels to purchase: {barrels_to_purchase}\n******************************\n******************************\n******************************\n")   
         print(f"The total amount of ml we purchased on this tick was {net_total}")
+        print(f"The amount of gold spent on purchasing barrels was {gold_spent}")
     return barrels_to_purchase  
 
 def try_purchase_barrels(gold, barrel, barrels_to_purchase, quantity):
