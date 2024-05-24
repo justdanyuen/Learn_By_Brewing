@@ -62,27 +62,36 @@ def create_views():
             FROM potion_ledger
         """))
 
-        connection.execute(sqlalchemy.text("""
-        CREATE VIEW potions_sales_summary AS
-        SELECT 
-            potion_id,                          
-            item_sku,
-            SUM(CASE WHEN day = 'Edgeday' THEN quantity ELSE 0 END) AS Edgeday,
-            SUM(CASE WHEN day = 'Bloomday' THEN quantity ELSE 0 END) AS Bloomday,
-            SUM(CASE WHEN day = 'Arcanaday' THEN quantity ELSE 0 END) AS Arcanaday,
-            SUM(CASE WHEN day = 'Hearthday' THEN quantity ELSE 0 END) AS Hearthday,
-            SUM(CASE WHEN day = 'Crownday' THEN quantity ELSE 0 END) AS Crownday,
-            SUM(CASE WHEN day = 'Blesseday' THEN quantity ELSE 0 END) AS Blesseday,
-            SUM(CASE WHEN day = 'Soulday' THEN quantity ELSE 0 END) AS Soulday
-        FROM 
-            cart_items
-        GROUP BY 
-            potion_id, item_sku
-        ORDER BY 
-            potion_id
-        """))
+        # connection.execute(sqlalchemy.text("""
+        # CREATE VIEW potions_sales_summary AS
+        # SELECT 
+        #     potion_id,                          
+        #     item_sku,
+        #     SUM(CASE WHEN day = 'Edgeday' THEN quantity ELSE 0 END) AS Edgeday,
+        #     SUM(CASE WHEN day = 'Bloomday' THEN quantity ELSE 0 END) AS Bloomday,
+        #     SUM(CASE WHEN day = 'Arcanaday' THEN quantity ELSE 0 END) AS Arcanaday,
+        #     SUM(CASE WHEN day = 'Hearthday' THEN quantity ELSE 0 END) AS Hearthday,
+        #     SUM(CASE WHEN day = 'Crownday' THEN quantity ELSE 0 END) AS Crownday,
+        #     SUM(CASE WHEN day = 'Blesseday' THEN quantity ELSE 0 END) AS Blesseday,
+        #     SUM(CASE WHEN day = 'Soulday' THEN quantity ELSE 0 END) AS Soulday
+        # FROM 
+        #     cart_items
+        # GROUP BY 
+        #     potion_id, item_sku
+        # ORDER BY 
+        #     potion_id
+        # """))
 
-        # connection.execute(sqlalchemy.text(""" DROP VIEW potions_sales_summary"""))
+        # connection.execute(sqlalchemy.text(""" DROP VIEW daily_gold_changes"""))
+
+        # connection.execute(sqlalchemy.text("""
+        # CREATE VIEW daily_gold as 
+        # SELECT DATE_TRUNC('day', created_at - interval '18 hours') real_day, day, (DATE_PART('week', created_at - interval '18 hours')-18) as week_num, SUM(net_change) as gold
+        # FROM gold_ledger 
+        # WHERE day is not null
+        # GROUP BY 1, 2, 3
+        # ORDER BY real_day
+        # """))
 
 
 
