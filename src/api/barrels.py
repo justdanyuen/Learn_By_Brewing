@@ -274,83 +274,92 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         desired_ml_per_color = 35000  # Example desired ml per potion type
 
         # Purchase decision logic - Prioritize larger barrels first
-        for color in ['dark', 'red', 'green', 'blue']:
+        for color in ['red', 'green', 'blue']:
             catalog = potion_type_catalogs[color]
             print(f"Checking {color} barrels:\n")
 
-            if color == 'dark':
-                continue
+            if catalog and gold_total >= catalog[0].price and available_capacity >= catalog[0].ml_per_barrel:
+                barrel = catalog[0]
+                quantity = 1
+                success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
+                if success:
+                    ml_added = barrel.ml_per_barrel * quantity
+                    ml_counts[color] += ml_added
+                    total_ml += ml_added
+                    available_capacity -= ml_added
+                    net_total += barrel.ml_per_barrel * quantity
+
             
-            # Sort the catalog by ml_per_barrel in descending order
-            catalog.sort(key=lambda x: x.ml_per_barrel, reverse=True)
-            current_ml_deficit = desired_ml_per_color - ml_counts[color]  # Calculate deficit
+            # # Sort the catalog by ml_per_barrel in descending order
+            # catalog.sort(key=lambda x: x.ml_per_barrel, reverse=True)
+            # current_ml_deficit = desired_ml_per_color - ml_counts[color]  # Calculate deficit
 
         
-            for barrel in catalog:
+            # for barrel in catalog:
                 
-                # # if ml_counts[color] >= 3000 and color != 'dark':
-                # if ml_counts[color] >= 6000:
-                #     continue #if I have 500ml, for now that's good 
+            #     # # if ml_counts[color] >= 3000 and color != 'dark':
+            #     # if ml_counts[color] >= 6000:
+            #     #     continue #if I have 500ml, for now that's good 
 
-                if gold_total < barrel.price:
-                    continue
+            #     if gold_total < barrel.price:
+            #         continue
 
-                # quantity = min(barrel.quantity, (gold_total // barrel.price), (ml_capacity - total_ml) // barrel.ml_per_barrel)
-                # Hard coded FOR NOW to max out at 10000 so I can have 10000 reserve for dark barrel purchases
-                # if color == 'dark':
-                #     quantity = 1
-                # else:
-
-
-                # Calculate the maximum quantity of barrels that can be purchased without exceeding 20,000 ml per color
-                max_ml_quantity = (desired_ml_per_color - ml_counts[color]) // barrel.ml_per_barrel
-                print(f"max_ml_quantity: {max_ml_quantity}")
+            #     # quantity = min(barrel.quantity, (gold_total // barrel.price), (ml_capacity - total_ml) // barrel.ml_per_barrel)
+            #     # Hard coded FOR NOW to max out at 10000 so I can have 10000 reserve for dark barrel purchases
+            #     # if color == 'dark':
+            #     #     quantity = 1
+            #     # else:
 
 
-                proportional_quantity = int((current_ml_deficit / desired_ml_per_color) * barrel.quantity)
-                # Then incorporate this into your quantity calculation
-                quantity = min(barrel.quantity, (gold_total // barrel.price), available_capacity // barrel.ml_per_barrel, proportional_quantity, max_ml_quantity)
-                print(f"quantity: {quantity}")
+            #     # Calculate the maximum quantity of barrels that can be purchased without exceeding 20,000 ml per color
+            #     max_ml_quantity = (desired_ml_per_color - ml_counts[color]) // barrel.ml_per_barrel
+            #     print(f"max_ml_quantity: {max_ml_quantity}")
 
-                # Ensure that adding this quantity does not exceed the desired ml per color
-                if ml_counts[color] + barrel.ml_per_barrel * quantity > desired_ml_per_color:
-                    quantity = (desired_ml_per_color - ml_counts[color]) // barrel.ml_per_barrel
-                print(f"checked quantity: {quantity}")
 
-                if color == 'dark':
-                    quantity = 1
+            #     proportional_quantity = int((current_ml_deficit / desired_ml_per_color) * barrel.quantity)
+            #     # Then incorporate this into your quantity calculation
+            #     quantity = min(barrel.quantity, (gold_total // barrel.price), available_capacity // barrel.ml_per_barrel, proportional_quantity, max_ml_quantity)
+            #     print(f"quantity: {quantity}")
 
-                # Final purchasing decision
-                if quantity > 0:
-                    success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
-                    if success:
-                        ml_added = barrel.ml_per_barrel * quantity
-                        ml_counts[color] += ml_added
-                        total_ml += ml_added
-                        available_capacity -= ml_added
-                        net_total += barrel.ml_per_barrel * quantity
+            #     # Ensure that adding this quantity does not exceed the desired ml per color
+            #     if ml_counts[color] + barrel.ml_per_barrel * quantity > desired_ml_per_color:
+            #         quantity = (desired_ml_per_color - ml_counts[color]) // barrel.ml_per_barrel
+            #     print(f"checked quantity: {quantity}")
+
+            #     if color == 'dark':
+            #         quantity = 1
+
+            #     # Final purchasing decision
+            #     if quantity > 0:
+            #         success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
+            #         if success:
+            #             ml_added = barrel.ml_per_barrel * quantity
+            #             ml_counts[color] += ml_added
+            #             total_ml += ml_added
+            #             available_capacity -= ml_added
+            #             net_total += barrel.ml_per_barrel * quantity
                                 
-                # quantity = min(barrel.quantity, (gold_total // barrel.price), available_capacity // barrel.ml_per_barrel)
+            #     # quantity = min(barrel.quantity, (gold_total // barrel.price), available_capacity // barrel.ml_per_barrel)
 
-                # if quantity <= 0:
-                #     continue
+            #     # if quantity <= 0:
+            #     #     continue
 
-                # success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
-                # if success:
-                #     ml_added = barrel.ml_per_barrel * quantity
-                #     ml_counts[color] += barrel.ml_per_barrel * quantity
-                #     total_ml += ml_added
-                #     available_capacity -= ml_added  # Deduct the used capacity from available
+            #     # success, gold_total = try_purchase_barrels(gold_total, barrel, barrels_to_purchase, quantity)
+            #     # if success:
+            #     #     ml_added = barrel.ml_per_barrel * quantity
+            #     #     ml_counts[color] += barrel.ml_per_barrel * quantity
+            #     #     total_ml += ml_added
+            #     #     available_capacity -= ml_added  # Deduct the used capacity from available
 
-                #     if available_capacity <= 0:
-                #         break  # Exit if no more capacity is available
+            #     #     if available_capacity <= 0:
+            #     #         break  # Exit if no more capacity is available
 
-                # else:
-                #     print(f"Not enough gold, has {gold_total} but requires {barrel.price * quantity}")
+            #     # else:
+            #     #     print(f"Not enough gold, has {gold_total} but requires {barrel.price * quantity}")
 
-        # Don'y buy anymore barrels it's grindtime
-        print("setting the barrel plan to empty, closing down our shop!")
-        barrels_to_purchase = []
+        # # Don'y buy anymore barrels it's grindtime
+        # print("setting the barrel plan to empty, closing down our shop!")
+        # barrels_to_purchase = []
 
         print(f"Barrels to purchase: {barrels_to_purchase}\n******************************\n******************************\n******************************\n")   
         print(f"The total amount of ml we purchased on this tick was {net_total}")
